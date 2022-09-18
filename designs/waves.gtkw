@@ -1,0 +1,25 @@
+[*]
+[*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
+[*] Sun Sep 18 20:06:51 2022
+[*]
+[dumpfile] "/home/tom/projects/Silixel-tvb/designs/waves.vcd"
+[dumpfile_mtime] "Sun Sep 18 20:05:23 2022"
+[dumpfile_size] 24536
+[savefile] "/home/tom/projects/Silixel-tvb/designs/waves.gtkw"
+[timestart] 34285
+[size] 1731 984
+[pos] -1 -1
+*-7.000000 339 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb_memory.
+[sst_width] 223
+[signals_width] 347
+[sst_expanded] 1
+[sst_vpaned_height] 287
+@28
+tb_memory.clock
+@22
+tb_memory.u_mem.cntr[8:0]
+@23
+tb_memory.out_leds[7:0]
+[pattern_trace] 1
+[pattern_trace] 0
