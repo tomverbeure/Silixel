@@ -55,6 +55,8 @@ extern int              g_Cycle;
 
 using namespace std;
 
+
+
 // --------------------------------------------------------------
 
 void simulInit_cuda(const vector<t_lut>& luts,const vector<int>& ones)

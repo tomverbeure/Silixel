@@ -156,8 +156,6 @@ void simulCudaNextWait()
     cudaEvent_t start, stop;
     checkCudaErrors(cudaEventCreate(&start));
     checkCudaErrors(cudaEventCreate(&stop));
-
-    CudaDummy();
 }
 
 /* -------------------------------------------------------- */
@@ -376,7 +374,8 @@ void initCuda(int argc, char **argv)
 int main(int argc, char **argv)
 {
   initCuda(argc,argv);
-  CudaDummy();
+//  CudaDummy();
+  CudaBWTest();
 
   exit(0);
 

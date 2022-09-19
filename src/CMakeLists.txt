@@ -97,7 +97,7 @@ ADD_EXECUTABLE(silixel_cuda
 	simul_cpu.h
 	simul_gpu.cc
 	simul_gpu.h
-	simul_cuda.cc
+	simul_cuda.cu
 	simul_cuda.h
 	read.cc
 	read.h
