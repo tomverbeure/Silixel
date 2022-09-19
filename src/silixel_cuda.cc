@@ -48,14 +48,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <cuda_profiler_api.h>
 
 // cuda_runtime.h must be included before including this one.
 #include <helper_cuda.h>
+#include <helper_functions.h>
 
 #include "read.h"
 #include "analyze.h"
 #include "simul_cpu.h"
 #include "simul_gpu.h"
+#include "simul_cuda.h"
+
+#include "dummy.h"
+
 
 // --------------------------------------------------------------
 
@@ -65,6 +71,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------
 
 using namespace std;
+
+
+static void check(CUresult result, char const *const func,
+                  const char *const file, int const line) {
+  if (result) {
+    fprintf(stderr, "CUDA error at %s:%d code=%d \"%s\" \n", file, line,
+            static_cast<unsigned int>(result), func);
+    exit(EXIT_FAILURE);
+  }
+}
+
+#define checkCudaDrvErrors(val) check((val), #val, __FILE__, __LINE__)
 
 // --------------------------------------------------------------
 
@@ -131,6 +149,15 @@ void simulGPUNextWait()
   g_Hz = (double)CYCLE_BUFFER_LEN / ((double)ms / 1000.0);
   g_UsecPerCycle = (double)ms * 1000.0 / (double)CYCLE_BUFFER_LEN;
   g_OutportCycle = 0;
+}
+
+void simulCudaNextWait()
+{
+    cudaEvent_t start, stop;
+    checkCudaErrors(cudaEventCreate(&start));
+    checkCudaErrors(cudaEventCreate(&stop));
+
+    CudaDummy();
 }
 
 /* -------------------------------------------------------- */
@@ -335,11 +362,22 @@ void mainRender()
 
 /* -------------------------------------------------------- */
 
+void initCuda(int argc, char **argv)
+{
+  CUdevice cuDevice;
+
+  cuDevice = findCudaDevice(argc, (const char **)argv);
+  if (cuDevice == -1){
+    exit(EXIT_FAILURE);
+  }
+}
+
 int main(int argc, char **argv)
 {
-  cudaError_t error;
+  initCuda(argc,argv);
+  CudaDummy();
 
-  CUdevice cuDevice = findCudaDevice(argc, (const char **)argv);
+  exit(0);
 
   try {
 
