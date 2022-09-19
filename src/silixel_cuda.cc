@@ -362,12 +362,13 @@ void mainRender()
 
 /* -------------------------------------------------------- */
 
+CUdevice g_cuDevice;
+
 void initCuda(int argc, char **argv)
 {
-  CUdevice cuDevice;
 
-  cuDevice = findCudaDevice(argc, (const char **)argv);
-  if (cuDevice == -1){
+  g_cuDevice = findCudaDevice(argc, (const char **)argv);
+  if (g_cuDevice == -1){
     exit(EXIT_FAILURE);
   }
 }
