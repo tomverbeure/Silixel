@@ -55,74 +55,78 @@ extern int              g_Cycle;
 
 using namespace std;
 
-
-
 // --------------------------------------------------------------
+
+typedef uint16_t    lut_cfg_t;
+typedef uint32_t    lut_addr_t;
+typedef uint8_t     lut_val_t;
+
+// 1 bit per LUT location, so 16-bits for a 4-input LUT. 1 Cfg value for each LUT in the design.
+lut_cfg_t       * g_cuLUTs_Cfg;
+
+// 1 address (or better: index) to a LUT output that serves as the input for this LUT.
+// 4 addresses per LUT. 1 set of addresses for each LUT in the design.
+lut_addr_t      * g_cuLUTs_Addrs;
+
+// Unregistered (D, stored in bit 0) and registered (Q, stored in bit 1) output value of a LUT.
+// (D,Q) set for each LUT in the design.
+lut_val_t       * g_cuLUTs_Outputs;
+
+// List with all the D or Q LUT values that are 1 at the start of a simulation.
+// The value store is formated as (LUT addr << 1) | (Q ? 1 : 0)
+// So the LSB indicates whether the indicates value is for a Q or a D.
+lut_addr_t      * g_cuOutInits;
+
+// Location of the output values.
+// Uses the same format a g_cuOutInits: value is stored at (LUT addr << 1) | (Q ? 1: 0)
+// There are as many items in this array as there are output ports.
+lut_addr_t      * g_cuOutPortsLocs;
+// Value of the output ports. A shader loops through all the OutPortsLocs, fetches
+// the data from g_cuLUTs_Outputs, and stores the value here.
+// This array contais as many values as there are output ports times CYCLE_BUFFER_LEN.
+lut_val_t       * g_cuOutPortsVals;
+
+
+#define NR_LUT_INPUTS   4
+const int G = 128;
 
 void simulInit_cuda(const vector<t_lut>& luts,const vector<int>& ones)
 {
+    int n_luts = (int)luts.size();
 
-#if 0
-  int n_luts = (int)luts.size();
-  n_luts += ( (n_luts & (G - 1)) ? (G - (n_luts & (G - 1))) : 0 );
-  g_LUTs_Cfg    .init( n_luts       * sizeof(uint), GL_SHADER_STORAGE_BUFFER);
-  g_LUTs_Addrs  .init((n_luts << 2) * sizeof(uint), GL_SHADER_STORAGE_BUFFER);
-  g_LUTs_Outputs.init( n_luts       * sizeof(uint), GL_SHADER_STORAGE_BUFFER);
-  g_GPU_OutPortsVals.init((int)g_OutPorts.size() * sizeof(uint) * CYCLE_BUFFER_LEN, GL_SHADER_STORAGE_BUFFER);
-  g_GPU_OutPortsLocs.init((int)g_OutPorts.size() * sizeof(uint), GL_SHADER_STORAGE_BUFFER);
-  g_GPU_OutInits.init((int)ones.size() * sizeof(uint), GL_SHADER_STORAGE_BUFFER);
+    // Round up n_luts to be a multiple of 128.
+    n_luts += ( (n_luts & (G - 1)) ? (G - (n_luts & (G - 1))) : 0 );
 
-  // we initialize all outputs to zero
-  {
-    glBindBufferARB(GL_SHADER_STORAGE_BUFFER, g_LUTs_Outputs.glId());
-    int *ptr = (int*)glMapBufferARB(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-    memset(ptr, 0x00, g_LUTs_Outputs.size());
-    glUnmapBufferARB(GL_SHADER_STORAGE_BUFFER);
-    glBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
-  }
-  // initialize the static LUT table
-  // -> configs
-  {
-    glBindBufferARB(GL_SHADER_STORAGE_BUFFER, g_LUTs_Cfg.glId());
-    int *ptr = (int*)glMapBufferARB(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-    ForIndex(l, (int)luts.size()) {
-      ptr[l] = (int)luts[l].cfg;
+    cudaMallocManaged(&g_cuLUTs_Cfg,      n_luts                 * sizeof(lut_cfg_t));
+    cudaMallocManaged(&g_cuLUTs_Addrs,    n_luts * NR_LUT_INPUTS * sizeof(lut_addr_t));
+    cudaMallocManaged(&g_cuLUTs_Outputs,  n_luts                 * sizeof(lut_val_t));
+
+    cudaMallocManaged(&g_cuOutPortsLocs,  g_OutPorts.size()      * sizeof(lut_addr_t));
+    cudaMallocManaged(&g_cuOutPortsVals,  g_OutPorts.size() * CYCLE_BUFFER_LEN * sizeof(lut_val_t));
+
+    cudaMallocManaged(&g_cuOutInits,      ones.size()            * sizeof(lut_addr_t));
+
+    for(int i=0; i<n_luts; ++i){
+        // initialize the static LUT table
+        // -> configs
+        g_cuLUTs_Cfg[i] = (int)luts[i].cfg; 
+  
+        // -> addrs
+        for(int j=0;i<NR_LUT_INPUTS;++j){
+            g_cuLUTs_Addrs[i*NR_LUT_INPUTS + j] = max(0,(int)luts[i].inputs[j]);
+        }
+
+        // we initialize all outputs to zero
+        g_cuLUTs_Outputs[i] = 0;
     }
-    glUnmapBufferARB(GL_SHADER_STORAGE_BUFFER);
-    glBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
-  }
-  // -> addrs
-  {
-    glBindBufferARB(GL_SHADER_STORAGE_BUFFER, g_LUTs_Addrs.glId());
-    int *ptr = (int*)glMapBufferARB(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-    ForIndex(l, (int)luts.size()) {
-      ForIndex(i, 4) {
-        ptr[(l<<2)+i] = max(0,(int)luts[l].inputs[i]);
-      }
+
+    for(auto op : g_OutPorts) {
+        g_cuOutPortsLocs[op.second[0]] = op.second[1];
     }
-    glUnmapBufferARB(GL_SHADER_STORAGE_BUFFER);
-    glBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
-  }
-  // -> outport locations
-  {
-    glBindBufferARB(GL_SHADER_STORAGE_BUFFER, g_GPU_OutPortsLocs.glId());
-    int *ptr = (int*)glMapBufferARB(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-    for (auto op : g_OutPorts) {
-      ptr[op.second[0]] = op.second[1];
+
+    for(int i=0; i<ones.size();++i){
+        g_cuOutInits[i] = ones[i];
     }
-    glUnmapBufferARB(GL_SHADER_STORAGE_BUFFER);
-    glBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
-  }
-  // -> initialized outputs
-  {
-    glBindBufferARB(GL_SHADER_STORAGE_BUFFER, g_GPU_OutInits.glId());
-    int *ptr = (int*)glMapBufferARB(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-    ForIndex(o,ones.size()) { ptr[o] = ones[o]; }
-    glUnmapBufferARB(GL_SHADER_STORAGE_BUFFER);
-    glBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
-  }
-  glMemoryBarrier(GL_ALL_BARRIER_BITS);
-#endif
 }
 
 /* -------------------------------------------------------- */

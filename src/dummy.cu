@@ -4,7 +4,7 @@
 
 #include <cuda.h>
 
-extern "C" __global__ void CudaDummy_kernel(
+__global__ void CudaDummy_kernel(
         const float *A, 
         const float *B,
         float *C, 
@@ -17,7 +17,7 @@ extern "C" __global__ void CudaDummy_kernel(
 
 extern CUdevice g_cuDevice;
 
-extern "C" void CudaDummy() 
+void CudaDummy() 
 {
     int N   = 5 * 64 * 1024 * 1024;
 
@@ -60,7 +60,7 @@ extern "C" void CudaDummy()
 
 #define int_type uint8_t
 
-extern "C" __global__ void CudaBWTest_kernel(
+__global__ void CudaBWTest_kernel(
         const int_type *A, 
         const int_type *B,
         int_type *C, 
@@ -71,7 +71,7 @@ extern "C" __global__ void CudaBWTest_kernel(
   if (i < N) C[i] = A[i] + B[i];
 }
 
-extern "C" void CudaBWTest() 
+void CudaBWTest() 
 {
     int N   = 64 * 1024 * 1024;
 
