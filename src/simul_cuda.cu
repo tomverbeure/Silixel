@@ -88,14 +88,19 @@ lut_val_t       * g_cuOutPortsVals;
 
 
 #define NR_LUT_INPUTS   4
+
 const int G = 128;
+
+int rounded_n(int n)
+{
+    // Round up n to be a multiple of G.
+    n += ( (n & (G - 1)) ? (G - (n & (G - 1))) : 0 );
+    return n;
+}
 
 void simulInit_cuda(const vector<t_lut>& luts,const vector<int>& ones)
 {
-    int n_luts = (int)luts.size();
-
-    // Round up n_luts to be a multiple of 128.
-    n_luts += ( (n_luts & (G - 1)) ? (G - (n_luts & (G - 1))) : 0 );
+    int n_luts = rounded_n((int)luts.size());
 
     cudaMallocManaged(&g_cuLUTs_Cfg,      n_luts                 * sizeof(lut_cfg_t));
     cudaMallocManaged(&g_cuLUTs_Addrs,    n_luts * NR_LUT_INPUTS * sizeof(lut_addr_t));
@@ -112,7 +117,7 @@ void simulInit_cuda(const vector<t_lut>& luts,const vector<int>& ones)
         g_cuLUTs_Cfg[i] = (int)luts[i].cfg; 
   
         // -> addrs
-        for(int j=0;i<NR_LUT_INPUTS;++j){
+        for(int j=0;j<NR_LUT_INPUTS;++j){
             g_cuLUTs_Addrs[i*NR_LUT_INPUTS + j] = max(0,(int)luts[i].inputs[j]);
         }
 
@@ -131,45 +136,143 @@ void simulInit_cuda(const vector<t_lut>& luts,const vector<int>& ones)
 
 /* -------------------------------------------------------- */
 
+__global__ void simInit_cuda(
+    const lut_addr_t    * ones,
+    lut_val_t           * outputs,
+    const int           N
+)
+{
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
+    if (i<N){
+        lut_addr_t addr = ones[i];
+        lut_addr_t real_addr = addr >> 1;
+
+        lut_val_t   old_val = outputs[real_addr];
+        lut_val_t   new_val = old_val | (1 << (addr & 1));
+
+        if (old_val != new_val){
+            outputs[real_addr] = new_val;
+        }
+    }
+}
+
+__device__ lut_val_t get_output(lut_val_t * outputs, lut_addr_t a)
+{
+    return (outputs[a >> 1] >> (a & 1)) & 1;
+}
+
+__global__ void simSimul_cuda(
+    const lut_cfg_t     * cfg,
+    const lut_addr_t    * addrs,
+    lut_val_t           * outputs, 
+    const int           start_lut,
+    const int           N
+)
+{
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
+    if (i<N){
+        int lut_id = start_lut + i;
+        lut_cfg_t C     = cfg[lut_id];
+        lut_val_t i0    = get_output(outputs, addrs[i*4]);
+        lut_val_t i1    = get_output(outputs, addrs[i*4 + 1]);
+        lut_val_t i2    = get_output(outputs, addrs[i*4 + 2]);
+        lut_val_t i3    = get_output(outputs, addrs[i*4 + 3]);
+        int sh = i3 | (i2 << 1) | (i1 << 2) | (i0 << 3);
+
+        lut_val_t outv = outputs[lut_id];
+        lut_val_t old_d = outv & 1u;
+        lut_val_t new_d = (C >> sh) & 1u;
+
+        if (old_d != new_d) {
+            if (new_d == 1){
+                outputs[lut_id] = outv | 1;
+            }
+            else{
+                outputs[lut_id] = outv & 0xfffffffe;
+            }
+        }
+    }
+}
+
+__global__ void simPosEdge_cuda(
+    lut_val_t           * outputs, 
+    const int           N
+)
+{
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
+    if (i<N){
+        int lut_id = i;
+
+        lut_val_t outv = outputs[lut_id];
+
+        if ((outv & 1) != ((outv>>1)&1)){
+            if ((outv & 1) == 1) {
+                outputs[lut_id] = 3;
+            } else {
+                outputs[lut_id] = 0;
+            }
+        }
+    }
+}
+
+__global__ void simOutPorts_cuda(
+    const lut_val_t     * outputs, 
+    const lut_addr_t    * portlocs, 
+    lut_val_t           * portvals,
+    int offset,
+    int N
+)
+{
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
+    if (i<N){
+        int id = i;
+        lut_addr_t  o = portlocs[id];
+        portvals[offset + id] = (outputs[o>>1] >> (o & 1)) & 1;
+    }
+}
+
+
+/* -------------------------------------------------------- */
+
 void simulBegin_cuda(
   const vector<t_lut>& luts,
   const vector<int>&   step_starts,
   const vector<int>&   step_ends,
   const vector<int>&   ones)
 {
-#if 0
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, g_LUTs_Cfg.glId());
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, g_LUTs_Addrs.glId());
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, g_LUTs_Outputs.glId());
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, g_GPU_OutPortsLocs.glId());
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, g_GPU_OutPortsVals.glId());
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, g_GPU_OutInits.glId());
-  // init cells
-  g_ShInit.begin();
-  g_ShInit.run(v3i((int)ones.size(),1,1));
-  g_ShInit.end();
-  // resolve constant cells
-  ForIndex (c,2) {
-    int n = step_ends[0] - step_starts[0] + 1;
-    g_ShSimul.begin();
-    g_ShSimul.start_lut.set((uint)0);
-    g_ShSimul.num.set((uint)n);
-    g_ShSimul.run(v3i((n / G) + ((n & (G - 1)) ? 1 : 0), 1, 1));
-    g_ShSimul.end();
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-    g_ShPosEdge.begin();
-    n = (int)luts.size();
-    g_ShPosEdge.num.set((uint)n);
-    g_ShPosEdge.run(v3i((n / G) + ((n & (G - 1)) ? 1 : 0), 1, 1));
-    g_ShPosEdge.end();
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-  }
-  // init cells
-  // Why a second time? Some of these registers may have been cleared after const resolve
-  g_ShInit.begin();
-  g_ShInit.run(v3i((int)ones.size(), 1, 1));
-  g_ShInit.end();
-#endif
+    int n;
+    int blockSize;
+    int numBlocks;
+
+    // init cells
+    n = ones.size();
+    blockSize = G;
+    numBlocks = (n+blockSize-1)/blockSize;
+
+    simInit_cuda<<<numBlocks,blockSize>>>(g_cuOutInits, g_cuLUTs_Outputs, n);
+
+    // resolve constant cells
+    for(int c=0;c<2;++c){
+        n = step_ends[0]-step_starts[0]+1;
+        blockSize = G;
+        numBlocks = (n+blockSize-1)/blockSize;
+
+        simSimul_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Cfg, g_cuLUTs_Addrs, g_cuLUTs_Outputs, 0, n);
+
+        n = luts.size();
+        blockSize = G;
+        numBlocks = (n+blockSize-1)/blockSize;
+
+        simPosEdge_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Outputs, n);
+    }
+
+    // init cells
+    // Why a second time? Some of these registers may have been cleared after const resolve
+    n = ones.size();
+    blockSize = G;
+    numBlocks = (n+blockSize-1)/blockSize;
+
+    simInit_cuda<<<numBlocks,blockSize>>>(g_cuOutInits, g_cuLUTs_Outputs, n);
 }
 
 /* -------------------------------------------------------- */
@@ -182,75 +285,62 @@ void simulCycle_cuda(
   const vector<int>&   step_starts,
   const vector<int>&   step_ends)
 {
-#if 0
+    int n;
+    int blockSize;
+    int numBlocks;
 
-  g_ShSimul.begin();
-  // iterate on depth levels (skipping const depth 0)
-  ForRange(depth, 1, (int)step_starts.size()-1) {
-    // only update LUTs at this particular level
-    int n = step_ends[depth] - step_starts[depth] + 1;
-    g_ShSimul.start_lut.set((uint)step_starts[depth]);
-    g_ShSimul.num.set((uint)n);
-    g_ShSimul.run(v3i((n / G) + ((n & (G - 1)) ? 1 : 0), 1, 1));
-    // sync required between iterations
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-  }
-  g_ShSimul.end();
-  // simulate positive clock edge
-  g_ShPosEdge.begin();
-  int n = (int)luts.size();
-  g_ShPosEdge.num.set((uint)n);
-  g_ShPosEdge.run(v3i((n / G) + ((n & (G - 1)) ? 1 : 0), 1, 1));
-  g_ShPosEdge.end();
-  // sync required to ensure further reads see the update
-  glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    for(int depth=1; depth < step_starts.size(); ++depth){
+        n = step_ends[depth]-step_starts[depth]+1;
+        blockSize = G;
+        numBlocks = (n+blockSize-1)/blockSize;
 
-  ++g_Cycle;
-#endif
+        simSimul_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Cfg, g_cuLUTs_Addrs, g_cuLUTs_Outputs, step_starts[depth], n);
+    }
 
+    n = luts.size();
+    blockSize = G;
+    numBlocks = (n+blockSize-1)/blockSize;
+
+    simPosEdge_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Outputs, n);
+
+    ++g_Cycle;
 }
 
 /* -------------------------------------------------------- */
 
 void simulEnd_cuda()
 {
-#if 0
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, 0);
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, 0);
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 0);
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
-#endif
 }
 
 /* -------------------------------------------------------- */
 
+static uint g_RBCycle = 0;
+
 bool simulReadback_cuda()
 {
+    int n;
+    int blockSize;
+    int numBlocks;
+
+    n = g_OutPorts.size();
+    blockSize = G;
+    numBlocks = (n+blockSize-1)/blockSize;
+
+    simOutPorts_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Outputs, g_cuOutPortsLocs, g_cuOutPortsVals, n * g_RBCycle, n);
+
+    ++g_RBCycle;
+
+    if (g_RBCycle == CYCLE_BUFFER_LEN) {
 #if 0
-  glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-  // gather outport values
-  g_ShOutPorts.begin();
-  g_ShOutPorts.offset.set((uint)g_OutPorts.size() * g_RBCycle);
-  g_ShOutPorts.run(v3i((int)g_OutPorts.size(), 1, 1)); // TODO: local size >= 32
-  g_ShOutPorts.end();
-
-  ++g_RBCycle;
-
-  if (g_RBCycle == CYCLE_BUFFER_LEN) {
-    // readback buffer
-    glBindBufferARB(GL_SHADER_STORAGE_BUFFER, g_GPU_OutPortsVals.glId());
-    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, g_OutPortsValues.sizeOfData(), g_OutPortsValues.raw());
-    glBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
-    g_RBCycle = 0;
+        // readback buffer
+        glBindBufferARB(GL_SHADER_STORAGE_BUFFER, g_GPU_OutPortsVals.glId());
+        glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, g_OutPortsValues.sizeOfData(), g_OutPortsValues.raw());
+        glBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
+#endif
+        g_RBCycle = 0;
   }
 
-  return g_RBCycle == 0;
-#endif
-
-    return false;
+    return g_RBCycle == 0;
 }
 
 /* -------------------------------------------------------- */
@@ -274,14 +364,12 @@ void simulPrintOutput_cuda(const vector<pair<string, int> >& outbits)
 
 void simulTerminate_cuda()
 {
-#if 0
-  g_LUTs_Addrs.terminate();
-  g_LUTs_Cfg.terminate();
-  g_LUTs_Outputs.terminate();
-  g_GPU_OutPortsLocs.terminate();
-  g_GPU_OutPortsVals.terminate();
-  g_GPU_OutInits.terminate();
-#endif
+    cudaFree(g_cuLUTs_Cfg);
+    cudaFree(g_cuLUTs_Addrs);
+    cudaFree(g_cuLUTs_Outputs);
+    cudaFree(g_cuOutPortsLocs);
+    cudaFree(g_cuOutPortsVals);
+    cudaFree(g_cuOutInits);
 }
 
 // --------------------------------------------------------------

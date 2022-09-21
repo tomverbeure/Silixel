@@ -235,7 +235,7 @@ void simulEnd_gpu()
 
 /* -------------------------------------------------------- */
 
-uint g_RBCycle = 0;
+static uint g_RBCycle = 0;
 
 bool simulReadback_gpu()
 {

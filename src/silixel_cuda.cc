@@ -375,9 +375,7 @@ int main(int argc, char **argv)
 {
   initCuda(argc,argv);
 //  CudaDummy();
-  CudaBWTest();
-
-  exit(0);
+//  CudaBWTest();
 
   try {
 
@@ -429,7 +427,7 @@ int main(int argc, char **argv)
     g_OutPortsValues.allocate(rank * CYCLE_BUFFER_LEN);
 
     /// GPU buffers init
-    simulInit_gpu(g_luts, g_ones);
+    simulInit_cuda(g_luts, g_ones);
 
     // init CPU simulation
     simulInit_cpu(g_luts, g_step_starts, g_step_ends, g_ones, g_cpu_computelists, g_cpu_outputs);
@@ -437,18 +435,18 @@ int main(int argc, char **argv)
     /// Quick benchmarking at startup
 #if 1
     // -> time GPU
-    simulBegin_gpu(g_luts,g_step_starts,g_step_ends,g_ones);
+    simulBegin_cuda(g_luts,g_step_starts,g_step_ends,g_ones);   
     {
       ForIndex(trials, 3) {
-        int n_cycles = 10000;
+        int n_cycles = 10;
         g_GPU_timer.start();
         ForIndex(cycle, n_cycles) {
-          simulCycle_gpu(g_luts, g_step_starts, g_step_ends);
-          simulReadback_gpu();
-          ++g_Cycle;
+          simulCycle_cuda(g_luts, g_step_starts, g_step_ends);
+          simulReadback_cuda();
         }
+        cudaDeviceSynchronize();
         g_GPU_timer.stop();
-        simulPrintOutput_gpu(outbits);
+        simulPrintOutput_cuda(outbits);
         auto ms = g_GPU_timer.waitResult();
         printf("[GPU] %d msec, ~ %f Hz, cycle time: %f usec\n",
           (int)ms,
@@ -456,7 +454,7 @@ int main(int argc, char **argv)
           (double)ms * 1000.0 / (double)n_cycles);
       }
     }
-    simulEnd_gpu();
+    simulEnd_cuda();
     // -> time CPU
     {
       ForIndex(trials, 3) {
@@ -474,6 +472,7 @@ int main(int argc, char **argv)
       }
     }
 #endif
+    exit(0);
 
     /// shader parameters
     g_ShVisu.begin();
@@ -486,12 +485,12 @@ int main(int argc, char **argv)
     g_ShVisu.end();
 
     /// main loop
-    simulBegin_gpu(g_luts, g_step_starts, g_step_ends, g_ones);
+    simulBegin_cuda(g_luts, g_step_starts, g_step_ends, g_ones);
     SimpleUI::loop();
-    simulEnd_gpu();
+    simulEnd_cuda();
 
     /// clean exit
-    simulTerminate_gpu();
+    simulTerminate_cuda();
     g_ShVisu.terminate();
     g_GPU_timer.terminate();
     g_FramebufferTex = Tex2DRGBA_Ptr();
