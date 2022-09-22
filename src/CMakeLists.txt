@@ -103,6 +103,8 @@ ADD_EXECUTABLE(silixel_cuda
 	read.h
 	analyze.cc
 	analyze.h
+    profile.cc
+    profile.h
 	)
 
 TARGET_COMPILE_FEATURES(silixel_cuda PUBLIC cxx_std_11)

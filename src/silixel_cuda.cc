@@ -56,6 +56,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "read.h"
 #include "analyze.h"
+#include "profile.h"
 #include "simul_cpu.h"
 #include "simul_gpu.h"
 #include "simul_cuda.h"
@@ -419,6 +420,8 @@ int main(int argc, char **argv)
     analyze(g_luts, outbits, g_ones, g_step_starts, g_step_ends, g_cpu_depths);
 
     buildFanout(g_luts, g_cpu_fanout);
+
+    profileHistogram(g_luts);
 
     int rank = 0;
     for (auto op : outbits) {

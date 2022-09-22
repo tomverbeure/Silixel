@@ -59,7 +59,7 @@ using namespace std;
 
 typedef uint16_t    lut_cfg_t;
 typedef uint32_t    lut_addr_t;
-typedef uint8_t     lut_val_t;
+typedef uint32_t     lut_val_t;
 
 // 1 bit per LUT location, so 16-bits for a 4-input LUT. 1 Cfg value for each LUT in the design.
 lut_cfg_t       * g_cuLUTs_Cfg;
