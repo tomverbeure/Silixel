@@ -440,19 +440,30 @@ int main(int argc, char **argv)
     // -> time GPU
     simulBegin_cuda(g_luts,g_step_starts,g_step_ends,g_ones);   
     {
-      ForIndex(trials, 3) {
-        int n_cycles = 10;
-        g_GPU_timer.start();
+      ForIndex(trials, 50) {
+        int n_cycles = 200;
+
+        cudaEvent_t start, stop;
+        checkCudaErrors(cudaEventCreate(&start));
+        checkCudaErrors(cudaEventCreate(&stop));
+
+        checkCudaErrors(cudaEventRecord(start));
+
         ForIndex(cycle, n_cycles) {
           simulCycle_cuda(g_luts, g_step_starts, g_step_ends);
           simulReadback_cuda();
         }
+        checkCudaErrors(cudaEventRecord(stop));
+        float ms = 0;
+
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&ms, start, stop);
+
         cudaDeviceSynchronize();
-        g_GPU_timer.stop();
         simulPrintOutput_cuda(outbits);
-        auto ms = g_GPU_timer.waitResult();
-        printf("[GPU] %d msec, ~ %f Hz, cycle time: %f usec\n",
-          (int)ms,
+
+        printf("[GPU] %f msec, ~ %f Hz, cycle time: %f usec\n",
+          ms,
           (double)n_cycles / ((double)ms / 1000.0),
           (double)ms * 1000.0 / (double)n_cycles);
       }
