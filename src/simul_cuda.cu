@@ -98,18 +98,29 @@ int rounded_n(int n)
     return n;
 }
 
+extern CUdevice g_cuDevice;
+
 void simulInit_cuda(const vector<t_lut>& luts,const vector<int>& ones)
 {
     int n_luts = rounded_n((int)luts.size());
 
-    cudaMallocManaged(&g_cuLUTs_Cfg,      n_luts                 * sizeof(lut_cfg_t));
-    cudaMallocManaged(&g_cuLUTs_Addrs,    n_luts * NR_LUT_INPUTS * sizeof(lut_addr_t));
-    cudaMallocManaged(&g_cuLUTs_Outputs,  n_luts                 * sizeof(lut_val_t));
+    
+    int cfg_size        = n_luts                 * sizeof(lut_cfg_t);
+    int addrs_size      = n_luts * NR_LUT_INPUTS * sizeof(lut_addr_t);
+    int outputs_size    = n_luts                 * sizeof(lut_val_t);
+    int out_ports_locs_size = g_OutPorts.size()      * sizeof(lut_addr_t);
+    int out_ports_vals_size = g_OutPorts.size() * CYCLE_BUFFER_LEN * sizeof(lut_val_t);
+    int out_inits_size      = ones.size()            * sizeof(lut_addr_t);
 
-    cudaMallocManaged(&g_cuOutPortsLocs,  g_OutPorts.size()      * sizeof(lut_addr_t));
-    cudaMallocManaged(&g_cuOutPortsVals,  g_OutPorts.size() * CYCLE_BUFFER_LEN * sizeof(lut_val_t));
 
-    cudaMallocManaged(&g_cuOutInits,      ones.size()            * sizeof(lut_addr_t));
+    cudaMallocManaged(&g_cuLUTs_Cfg,      cfg_size);
+    cudaMallocManaged(&g_cuLUTs_Addrs,    addrs_size);
+    cudaMallocManaged(&g_cuLUTs_Outputs,  outputs_size);
+
+    cudaMallocManaged(&g_cuOutPortsLocs,  out_ports_locs_size);
+    cudaMallocManaged(&g_cuOutPortsVals,  out_ports_vals_size);
+
+    cudaMallocManaged(&g_cuOutInits,      out_inits_size);
 
     for(int i=0; i<n_luts; ++i){
         // initialize the static LUT table
@@ -132,6 +143,16 @@ void simulInit_cuda(const vector<t_lut>& luts,const vector<int>& ones)
     for(int i=0; i<ones.size();++i){
         g_cuOutInits[i] = ones[i];
     }
+
+    // Move everything to GPU memory in one go instead of relying on page
+    // faults. This makes the kernels run at max speed even when they are called
+    // the first time. That makes it easier for profiling.
+    cudaMemPrefetchAsync(g_cuLUTs_Cfg,      cfg_size, g_cuDevice);
+    cudaMemPrefetchAsync(g_cuLUTs_Addrs,    addrs_size, g_cuDevice);
+    cudaMemPrefetchAsync(g_cuLUTs_Outputs,  outputs_size, g_cuDevice);
+    cudaMemPrefetchAsync(g_cuOutPortsLocs,  out_ports_locs_size, g_cuDevice);
+    cudaMemPrefetchAsync(g_cuOutPortsVals,  out_ports_vals_size, g_cuDevice);
+    cudaMemPrefetchAsync(g_cuOutInits,      out_inits_size, g_cuDevice);
 }
 
 /* -------------------------------------------------------- */
