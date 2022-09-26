@@ -59,7 +59,7 @@ using namespace std;
 
 typedef uint16_t    lut_cfg_t;
 typedef uint32_t    lut_addr_t;
-typedef uint32_t     lut_val_t;
+typedef uint32_t    lut_val_t;
 
 // 1 bit per LUT location, so 16-bits for a 4-input LUT. 1 Cfg value for each LUT in the design.
 lut_cfg_t       * g_cuLUTs_Cfg;
@@ -89,12 +89,20 @@ lut_val_t       * g_cuOutPortsVals;
 
 #define NR_LUT_INPUTS   4
 
-const int G = 128;
+#define DEBUG 1
+
+#if DEBUG == 1
+const int g_blockSize   = 1;
+const int g_numBlocks   = 1;
+#else
+const int g_blockSize   = 128;
+const int g_numBlocks   = 256;
+#endif
 
 int rounded_n(int n)
 {
     // Round up n to be a multiple of G.
-    n += ( (n & (G - 1)) ? (G - (n & (G - 1))) : 0 );
+    n += ( (n & (g_blockSize - 1)) ? (g_blockSize - (n & (g_blockSize - 1))) : 0 );
     return n;
 }
 
@@ -113,14 +121,14 @@ void simulInit_cuda(const vector<t_lut>& luts,const vector<int>& ones)
     int out_inits_size      = ones.size()            * sizeof(lut_addr_t);
 
 
-    cudaMallocManaged(&g_cuLUTs_Cfg,      cfg_size);
-    cudaMallocManaged(&g_cuLUTs_Addrs,    addrs_size);
-    cudaMallocManaged(&g_cuLUTs_Outputs,  outputs_size);
+    checkCudaErrors(cudaMallocManaged(&g_cuLUTs_Cfg,      cfg_size));
+    checkCudaErrors(cudaMallocManaged(&g_cuLUTs_Addrs,    addrs_size));
+    checkCudaErrors(cudaMallocManaged(&g_cuLUTs_Outputs,  outputs_size));
 
-    cudaMallocManaged(&g_cuOutPortsLocs,  out_ports_locs_size);
-    cudaMallocManaged(&g_cuOutPortsVals,  out_ports_vals_size);
+    checkCudaErrors(cudaMallocManaged(&g_cuOutPortsLocs,  out_ports_locs_size));
+    checkCudaErrors(cudaMallocManaged(&g_cuOutPortsVals,  out_ports_vals_size));
 
-    cudaMallocManaged(&g_cuOutInits,      out_inits_size);
+    checkCudaErrors(cudaMallocManaged(&g_cuOutInits,      out_inits_size));
 
     for(int i=0; i<n_luts; ++i){
         // initialize the static LUT table
@@ -147,12 +155,14 @@ void simulInit_cuda(const vector<t_lut>& luts,const vector<int>& ones)
     // Move everything to GPU memory in one go instead of relying on page
     // faults. This makes the kernels run at max speed even when they are called
     // the first time. That makes it easier for profiling.
-    cudaMemPrefetchAsync(g_cuLUTs_Cfg,      cfg_size, g_cuDevice);
-    cudaMemPrefetchAsync(g_cuLUTs_Addrs,    addrs_size, g_cuDevice);
-    cudaMemPrefetchAsync(g_cuLUTs_Outputs,  outputs_size, g_cuDevice);
-    cudaMemPrefetchAsync(g_cuOutPortsLocs,  out_ports_locs_size, g_cuDevice);
-    cudaMemPrefetchAsync(g_cuOutPortsVals,  out_ports_vals_size, g_cuDevice);
-    cudaMemPrefetchAsync(g_cuOutInits,      out_inits_size, g_cuDevice);
+    checkCudaErrors(cudaMemPrefetchAsync(g_cuLUTs_Cfg,      cfg_size, g_cuDevice));
+    checkCudaErrors(cudaMemPrefetchAsync(g_cuLUTs_Addrs,    addrs_size, g_cuDevice));
+    checkCudaErrors(cudaMemPrefetchAsync(g_cuLUTs_Outputs,  outputs_size, g_cuDevice));
+    checkCudaErrors(cudaMemPrefetchAsync(g_cuOutPortsLocs,  out_ports_locs_size, g_cuDevice));
+    checkCudaErrors(cudaMemPrefetchAsync(g_cuOutPortsVals,  out_ports_vals_size, g_cuDevice));
+
+    if (out_inits_size > 0)
+        checkCudaErrors(cudaMemPrefetchAsync(g_cuOutInits,      out_inits_size, g_cuDevice));
 }
 
 /* -------------------------------------------------------- */
@@ -163,8 +173,8 @@ __global__ void simInit_cuda(
     const int           N
 )
 {
-    int i = blockDim.x * blockIdx.x + threadIdx.x;
-    if (i<N){
+    // Use Grid-Stride loops: https://developer.nvidia.com/blog/cuda-pro-tip-write-flexible-kernels-grid-stride-loops/
+    for(int i=blockIdx.x * blockDim.x + threadIdx.x; i < N; i += blockDim.x * gridDim.x){
         lut_addr_t addr = ones[i];
         lut_addr_t real_addr = addr >> 1;
 
@@ -190,19 +200,28 @@ __global__ void simSimul_cuda(
     const int           N
 )
 {
-    int i = blockDim.x * blockIdx.x + threadIdx.x;
-    if (i<N){
+#if 0
+    printf("blockIdx.x: %d, threadIdx.x: %d\n", blockIdx.x, threadIdx.x);
+#endif
+
+    for(int i=blockIdx.x * blockDim.x + threadIdx.x; i < N; i += blockDim.x * gridDim.x){
         int lut_id = start_lut + i;
+
         lut_cfg_t C     = cfg[lut_id];
-        lut_val_t i0    = get_output(outputs, addrs[i*4]);
-        lut_val_t i1    = get_output(outputs, addrs[i*4 + 1]);
-        lut_val_t i2    = get_output(outputs, addrs[i*4 + 2]);
-        lut_val_t i3    = get_output(outputs, addrs[i*4 + 3]);
+        lut_val_t i0    = get_output(outputs, addrs[lut_id*4]);
+        lut_val_t i1    = get_output(outputs, addrs[lut_id*4 + 1]);
+        lut_val_t i2    = get_output(outputs, addrs[lut_id*4 + 2]);
+        lut_val_t i3    = get_output(outputs, addrs[lut_id*4 + 3]);
         int sh = i3 | (i2 << 1) | (i1 << 2) | (i0 << 3);
 
         lut_val_t outv = outputs[lut_id];
         lut_val_t old_d = outv & 1u;
         lut_val_t new_d = (C >> sh) & 1u;
+
+#if DEBUG==1
+        printf("start_lut: %d, i: %d, id: %d, N: %d, new_d: %d <- i0(%d), i1(%d), i2(%d), i3(%d), a0(%d), a1(%d), a2(%d), a3(%d)\n", 
+                start_lut, i, lut_id, N, new_d, i0, i1, i2, i3, addrs[lut_id*4], addrs[lut_id*4+1], addrs[lut_id*4+2], addrs[lut_id*4+3]);
+#endif
 
         if (old_d != new_d) {
             if (new_d == 1){
@@ -267,21 +286,25 @@ void simulBegin_cuda(
 
     // init cells
     n = ones.size();
-    blockSize = G;
-    numBlocks = (n+blockSize-1)/blockSize;
+
+    //blockSize = G;
+    //numBlocks = (n+blockSize-1)/blockSize;
+
+    blockSize = g_blockSize;
+    numBlocks = g_numBlocks;
 
     simInit_cuda<<<numBlocks,blockSize>>>(g_cuOutInits, g_cuLUTs_Outputs, n);
 
     // resolve constant cells
     for(int c=0;c<2;++c){
         n = step_ends[0]-step_starts[0]+1;
-        blockSize = G;
+        blockSize = g_blockSize;
         numBlocks = (n+blockSize-1)/blockSize;
 
         simSimul_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Cfg, g_cuLUTs_Addrs, g_cuLUTs_Outputs, 0, n);
 
         n = luts.size();
-        blockSize = G;
+        blockSize = g_blockSize;
         numBlocks = (n+blockSize-1)/blockSize;
 
         simPosEdge_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Outputs, n);
@@ -290,7 +313,7 @@ void simulBegin_cuda(
     // init cells
     // Why a second time? Some of these registers may have been cleared after const resolve
     n = ones.size();
-    blockSize = G;
+    blockSize = g_blockSize;
     numBlocks = (n+blockSize-1)/blockSize;
 
     simInit_cuda<<<numBlocks,blockSize>>>(g_cuOutInits, g_cuLUTs_Outputs, n);
@@ -312,14 +335,18 @@ void simulCycle_cuda(
 
     for(int depth=1; depth < step_starts.size(); ++depth){
         n = step_ends[depth]-step_starts[depth]+1;
-        blockSize = G;
-        numBlocks = (n+blockSize-1)/blockSize;
+
+        //blockSize = g_blockSize;
+        //numBlocks = (n+blockSize-1)/blockSize;
+
+        blockSize = g_blockSize;
+        numBlocks = g_numBlocks;
 
         simSimul_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Cfg, g_cuLUTs_Addrs, g_cuLUTs_Outputs, step_starts[depth], n);
     }
 
     n = luts.size();
-    blockSize = G;
+    blockSize = g_blockSize;
     numBlocks = (n+blockSize-1)/blockSize;
 
     simPosEdge_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Outputs, n);
@@ -344,14 +371,15 @@ bool simulReadback_cuda()
     int numBlocks;
 
     n = g_OutPorts.size();
-    blockSize = G;
+    blockSize = g_blockSize;
     numBlocks = (n+blockSize-1)/blockSize;
 
     simOutPorts_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Outputs, g_cuOutPortsLocs, g_cuOutPortsVals, n * g_RBCycle, n);
 
-    ++g_RBCycle;
-
-    if (g_RBCycle == CYCLE_BUFFER_LEN) {
+    if (g_RBCycle == CYCLE_BUFFER_LEN-1) {
+        for(int i=0; i<g_OutPortsValues.size();++i){
+            g_OutPortsValues[i] = g_cuOutPortsVals[i];
+        }
 #if 0
         // readback buffer
         glBindBufferARB(GL_SHADER_STORAGE_BUFFER, g_GPU_OutPortsVals.glId());
@@ -359,7 +387,9 @@ bool simulReadback_cuda()
         glBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
 #endif
         g_RBCycle = 0;
-  }
+    }
+    else
+        ++g_RBCycle;
 
     return g_RBCycle == 0;
 }
@@ -368,7 +398,6 @@ bool simulReadback_cuda()
 
 void simulPrintOutput_cuda(const vector<pair<string, int> >& outbits)
 {
-#if 0
   // display result (assumes readback done)
   int val = 0;
   string str;
@@ -378,7 +407,6 @@ void simulPrintOutput_cuda(const vector<pair<string, int> >& outbits)
     val += vb << b;
   }
   fprintf(stderr, "b%s (d%d h%x)\n", str.c_str(), val, val);
-#endif
 }
 
 // --------------------------------------------------------------

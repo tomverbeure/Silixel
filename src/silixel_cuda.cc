@@ -440,8 +440,8 @@ int main(int argc, char **argv)
     // -> time GPU
     simulBegin_cuda(g_luts,g_step_starts,g_step_ends,g_ones);   
     {
-      ForIndex(trials, 50) {
-        int n_cycles = 200;
+      ForIndex(trials, 10) {
+        int n_cycles = 1;
 
         cudaEvent_t start, stop;
         checkCudaErrors(cudaEventCreate(&start));
@@ -486,7 +486,7 @@ int main(int argc, char **argv)
       }
     }
 #endif
-    exit(0);
+    //exit(0);
 
     /// shader parameters
     g_ShVisu.begin();
