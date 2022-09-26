@@ -69,7 +69,7 @@ void simulCycle_cuda(
 
 bool simulReadback_cuda();
 
-void simulPrintOutput_cuda(const vector<pair<string, int> >& outbits);
+void simulPrintOutput_cuda(const vector<pair<string, int> >& outbits, int nr = 1);
 
 void simulEnd_cuda();
 

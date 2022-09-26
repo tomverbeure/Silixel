@@ -89,7 +89,7 @@ lut_val_t       * g_cuOutPortsVals;
 
 #define NR_LUT_INPUTS   4
 
-#define DEBUG 1
+#define DEBUG 0
 
 #if DEBUG == 1
 const int g_blockSize   = 1;
@@ -267,7 +267,13 @@ __global__ void simOutPorts_cuda(
     if (i<N){
         int id = i;
         lut_addr_t  o = portlocs[id];
-        portvals[offset + id] = (outputs[o>>1] >> (o & 1)) & 1;
+        lut_val_t ov = (outputs[o>>1] >> (o & 1)) & 1;
+        portvals[offset + id] = ov;
+
+#if DEBUG==1
+        printf("output port %d (a:%d) = %d, offset = %d\n", i, o, ov, offset);
+#endif
+
     }
 }
 
@@ -377,15 +383,10 @@ bool simulReadback_cuda()
     simOutPorts_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Outputs, g_cuOutPortsLocs, g_cuOutPortsVals, n * g_RBCycle, n);
 
     if (g_RBCycle == CYCLE_BUFFER_LEN-1) {
+        cudaDeviceSynchronize();
         for(int i=0; i<g_OutPortsValues.size();++i){
             g_OutPortsValues[i] = g_cuOutPortsVals[i];
         }
-#if 0
-        // readback buffer
-        glBindBufferARB(GL_SHADER_STORAGE_BUFFER, g_GPU_OutPortsVals.glId());
-        glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, g_OutPortsValues.sizeOfData(), g_OutPortsValues.raw());
-        glBindBufferARB(GL_SHADER_STORAGE_BUFFER, 0);
-#endif
         g_RBCycle = 0;
     }
     else
@@ -396,17 +397,24 @@ bool simulReadback_cuda()
 
 /* -------------------------------------------------------- */
 
-void simulPrintOutput_cuda(const vector<pair<string, int> >& outbits)
+void simulPrintOutput_cuda(const vector<pair<string, int> >& outbits, int nr)
 {
   // display result (assumes readback done)
-  int val = 0;
-  string str;
-  for (int b = 0; b < outbits.size(); b++) {
-    int vb = g_OutPortsValues[b];
-    str = (vb ? "1" : "0") + str;
-    val += vb << b;
+  for(int i=0; i<nr; ++i){
+    int val = 0;
+    string str;
+
+    for (int b = 0; b < outbits.size(); b++) {
+      int vb = g_OutPortsValues[b + i *outbits.size() ];
+      str = (vb ? "1" : "0") + str;
+      val += vb << b;
+
+#if 0
+      fprintf(stderr, "output %d: %s = %d\n", b, outbits[b].first.c_str(), vb);
+#endif
+    }
+    fprintf(stderr, "b%s (d%d h%x)\n", str.c_str(), val, val); 
   }
-  fprintf(stderr, "b%s (d%d h%x)\n", str.c_str(), val, val);
 }
 
 // --------------------------------------------------------------

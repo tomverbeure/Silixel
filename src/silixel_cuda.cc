@@ -114,7 +114,7 @@ vector<int>      g_cpu_computelists;
 AutoPtr<GLMesh>  g_Quad;
 GLTimer          g_GPU_timer;
 
-bool             g_Use_GPU = true;
+bool             g_Use_CUDA = true;
 
 // --------------------------------------------------------------
 
@@ -138,38 +138,49 @@ int    g_OutportCycle = 0;
 
 /* -------------------------------------------------------- */
 
-void simulGPUNextWait()
+void simulCUDANextWait()
 {
-  g_GPU_timer.start();
+  cudaEvent_t start, stop;
+  checkCudaErrors(cudaEventCreate(&start));
+  checkCudaErrors(cudaEventCreate(&stop));
+
+  checkCudaErrors(cudaEventRecord(start));
+
   while (1) {
-    simulCycle_gpu(g_luts, g_step_starts, g_step_ends);
-    if (simulReadback_gpu()) break;
+    simulCycle_cuda(g_luts, g_step_starts, g_step_ends);
+    if (simulReadback_cuda()) break;
   }
-  g_GPU_timer.stop();
-  auto ms = g_GPU_timer.waitResult();
+
+  checkCudaErrors(cudaEventRecord(stop));
+
+  cudaEventSynchronize(stop);
+  float ms = 0;
+  cudaEventElapsedTime(&ms, start, stop);
+
   g_Hz = (double)CYCLE_BUFFER_LEN / ((double)ms / 1000.0);
   g_UsecPerCycle = (double)ms * 1000.0 / (double)CYCLE_BUFFER_LEN;
   g_OutportCycle = 0;
 }
 
-void simulCudaNextWait()
-{
-    cudaEvent_t start, stop;
-    checkCudaErrors(cudaEventCreate(&start));
-    checkCudaErrors(cudaEventCreate(&stop));
-}
-
 /* -------------------------------------------------------- */
 
-void simulGPUNext()
+void simulCUDANext()
 {
-  g_GPU_timer.start();
+  cudaEvent_t start, stop;
+  checkCudaErrors(cudaEventCreate(&start));
+  checkCudaErrors(cudaEventCreate(&stop));
 
-  simulCycle_gpu(g_luts, g_step_starts, g_step_ends);
-  bool datain = simulReadback_gpu();
+  checkCudaErrors(cudaEventRecord(start));
 
-  g_GPU_timer.stop();
-  auto ms = g_GPU_timer.waitResult();
+  simulCycle_cuda(g_luts, g_step_starts, g_step_ends);
+  bool datain = simulReadback_cuda();
+
+  checkCudaErrors(cudaEventRecord(stop));
+
+  cudaEventSynchronize(stop);
+  float ms = 0;
+  cudaEventElapsedTime(&ms, start, stop);
+
   g_Hz = (double)1 / ((double)ms / 1000.0);
   g_UsecPerCycle = (double)ms * 1000.0 / (double)1;
 
@@ -207,10 +218,10 @@ void updateFrame(int vs, int hs, int r, int g, int b)
 
 /* -------------------------------------------------------- */
 
-void simulGPU()
+void simulCUDA()
 {
   if (designHasVGA()) { // design has VGA output, display it
-    simulGPUNextWait(); // simulates a number of cycles and wait
+    simulCUDANextWait(); // simulates a number of cycles and wait
     // read the output of the simulated cycles
     ForIndex(cy, CYCLE_BUFFER_LEN) {
       int offset = cy * (int)g_OutPorts.size();
@@ -231,7 +242,7 @@ void simulGPU()
       updateFrame(vs, hs, r, g, b);
     }
   } else { // design has no VGA, show the output ports
-    simulGPUNext(); // step one cycle
+    simulCUDANext(); // step one cycle
     // make the output string
     g_OutPortString = "";
     int offset = g_OutportCycle * (int)g_OutPorts.size();
@@ -309,8 +320,8 @@ void mainRender()
 {
 
   // simulate
-  if (g_Use_GPU) {
-    simulGPU();
+  if (g_Use_CUDA) {
+    simulCUDA();
   } else {
     simulCPU();
   }
@@ -335,7 +346,7 @@ void mainRender()
   }
 
   // render LUTs+FF
-  if (g_Use_GPU) {
+  if (g_Use_CUDA) {
     GLProtectViewport vp;
     glViewport(0, 0, SCREEN_H*2/3, SCREEN_H*2/3);
     g_ShVisu.begin();
@@ -346,7 +357,7 @@ void mainRender()
   // -> GUI
   ImGui::SetNextWindowSize(ImVec2(300, 150), ImGuiCond_Once);
   ImGui::Begin("Status");
-  ImGui::Checkbox("Simulate on GPU", &g_Use_GPU);
+  ImGui::Checkbox("Simulate using CUDA", &g_Use_CUDA);
   ImGui::Text("%5.1f KHz %5.1f usec / cycle", g_Hz/1000.0, g_UsecPerCycle);
   ImGui::Text("simulated cycle: %6d", g_Cycle);
   ImGui::Text("simulated LUT4+FF %7d", g_luts.size());
@@ -440,8 +451,8 @@ int main(int argc, char **argv)
     // -> time GPU
     simulBegin_cuda(g_luts,g_step_starts,g_step_ends,g_ones);   
     {
-      ForIndex(trials, 10) {
-        int n_cycles = 1;
+      ForIndex(trials, 3) {
+        int n_cycles = 10000;
 
         cudaEvent_t start, stop;
         checkCudaErrors(cudaEventCreate(&start));
@@ -460,7 +471,7 @@ int main(int argc, char **argv)
         cudaEventElapsedTime(&ms, start, stop);
 
         cudaDeviceSynchronize();
-        simulPrintOutput_cuda(outbits);
+        simulPrintOutput_cuda(outbits, 10);
 
         printf("[GPU] %f msec, ~ %f Hz, cycle time: %f usec\n",
           ms,
@@ -486,7 +497,6 @@ int main(int argc, char **argv)
       }
     }
 #endif
-    //exit(0);
 
     /// shader parameters
     g_ShVisu.begin();
