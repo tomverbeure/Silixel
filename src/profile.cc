@@ -57,3 +57,31 @@ void profileHistogram(const vector<t_lut>& luts)
     }
 }
 
+void profileInputs(vector<t_lut>& luts)
+{
+    map<int,bool> lut_has_ff;
+
+    int nr_ffs = 0;
+
+    for(int lid = 0; lid < luts.size(); ++lid){
+        for(int i=0; i<4; ++i){
+            int input_id = luts[lid].inputs[i];
+
+            int src_lut_id  = input_id >> 1;
+            int src_is_ff   = input_id & 1;
+
+            if (src_is_ff){
+                if (lut_has_ff.find(src_lut_id) == lut_has_ff.end() ){
+                    lut_has_ff[src_lut_id] = true;
+                    // This should be moved to the analyze step...
+                    if (src_lut_id < luts.size()){
+                        luts[src_lut_id].is_ff = true;
+                    }
+                    ++nr_ffs;
+                }
+            }
+        }
+    }
+
+    printf("total nr luts: %zu, luts with FF: %zu\n", luts.size(), lut_has_ff.size());
+}

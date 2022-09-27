@@ -8,5 +8,6 @@ using namespace std;
 #include "analyze.h"
 
 void profileHistogram(const vector<t_lut>& luts);
+void profileInputs(vector<t_lut>& luts);
 
 #endif

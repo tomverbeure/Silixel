@@ -51,6 +51,7 @@ typedef unsigned char uchar;
 typedef struct s_lut {
   unsigned short cfg;
   int            inputs[4];
+  bool           is_ff;
 } t_lut;
 #pragma pack(pop)
 

@@ -57,16 +57,23 @@ using namespace std;
 
 // --------------------------------------------------------------
 
+#define NR_LUT_INPUTS   4
+
 typedef uint16_t    lut_cfg_t;
 typedef uint32_t    lut_addr_t;
 typedef uint8_t     lut_val_t;
 
-// 1 bit per LUT location, so 16-bits for a 4-input LUT. 1 Cfg value for each LUT in the design.
-lut_cfg_t       * g_cuLUTs_Cfg;
+typedef struct {
+    // 1 address (or better: index) to a LUT output that serves as the input for this LUT.
+    // 4 addresses per LUT. 1 set of addresses for each LUT in the design.
+    lut_addr_t  addrs[NR_LUT_INPUTS];
+    // 1 bit per LUT location, so 16-bits for a 4-input LUT. 1 Cfg value for each LUT in the design.
+    lut_cfg_t   cfg;
 
-// 1 address (or better: index) to a LUT output that serves as the input for this LUT.
-// 4 addresses per LUT. 1 set of addresses for each LUT in the design.
-lut_addr_t      * g_cuLUTs_Addrs;
+    bool        is_ff;
+} lut_info_t;
+
+lut_info_t      * g_cuLUTs_Infos;
 
 // Unregistered (D, stored in bit 0) and registered (Q, stored in bit 1) output value of a LUT.
 // (D,Q) set for each LUT in the design.
@@ -87,7 +94,6 @@ lut_addr_t      * g_cuOutPortsLocs;
 lut_val_t       * g_cuOutPortsVals;
 
 
-#define NR_LUT_INPUTS   4
 
 #define DEBUG 0
 
@@ -113,16 +119,14 @@ void simulInit_cuda(const vector<t_lut>& luts,const vector<int>& ones)
     int n_luts = rounded_n((int)luts.size());
 
     
-    int cfg_size        = n_luts                 * sizeof(lut_cfg_t);
-    int addrs_size      = n_luts * NR_LUT_INPUTS * sizeof(lut_addr_t);
-    int outputs_size    = n_luts                 * sizeof(lut_val_t);
-    int out_ports_locs_size = g_OutPorts.size()      * sizeof(lut_addr_t);
+    int info_size           = n_luts            * sizeof(lut_info_t);
+    int outputs_size        = n_luts            * sizeof(lut_val_t);
+    int out_ports_locs_size = g_OutPorts.size() * sizeof(lut_addr_t);
     int out_ports_vals_size = g_OutPorts.size() * CYCLE_BUFFER_LEN * sizeof(lut_val_t);
-    int out_inits_size      = ones.size()            * sizeof(lut_addr_t);
+    int out_inits_size      = ones.size()       * sizeof(lut_addr_t);
 
 
-    checkCudaErrors(cudaMallocManaged(&g_cuLUTs_Cfg,      cfg_size));
-    checkCudaErrors(cudaMallocManaged(&g_cuLUTs_Addrs,    addrs_size));
+    checkCudaErrors(cudaMallocManaged(&g_cuLUTs_Infos,    info_size));
     checkCudaErrors(cudaMallocManaged(&g_cuLUTs_Outputs,  outputs_size));
 
     checkCudaErrors(cudaMallocManaged(&g_cuOutPortsLocs,  out_ports_locs_size));
@@ -133,11 +137,12 @@ void simulInit_cuda(const vector<t_lut>& luts,const vector<int>& ones)
     for(int i=0; i<n_luts; ++i){
         // initialize the static LUT table
         // -> configs
-        g_cuLUTs_Cfg[i] = (int)luts[i].cfg; 
+        g_cuLUTs_Infos[i].cfg   = (int)luts[i].cfg;
+        g_cuLUTs_Infos[i].is_ff = luts[i].is_ff;
   
         // -> addrs
         for(int j=0;j<NR_LUT_INPUTS;++j){
-            g_cuLUTs_Addrs[i*NR_LUT_INPUTS + j] = max(0,(int)luts[i].inputs[j]);
+            g_cuLUTs_Infos[i].addrs[j] = max(0,(int)luts[i].inputs[j]);
         }
 
         // we initialize all outputs to zero
@@ -155,8 +160,7 @@ void simulInit_cuda(const vector<t_lut>& luts,const vector<int>& ones)
     // Move everything to GPU memory in one go instead of relying on page
     // faults. This makes the kernels run at max speed even when they are called
     // the first time. That makes it easier for profiling.
-    checkCudaErrors(cudaMemPrefetchAsync(g_cuLUTs_Cfg,      cfg_size, g_cuDevice));
-    checkCudaErrors(cudaMemPrefetchAsync(g_cuLUTs_Addrs,    addrs_size, g_cuDevice));
+    checkCudaErrors(cudaMemPrefetchAsync(g_cuLUTs_Infos,    info_size, g_cuDevice));
     checkCudaErrors(cudaMemPrefetchAsync(g_cuLUTs_Outputs,  outputs_size, g_cuDevice));
     checkCudaErrors(cudaMemPrefetchAsync(g_cuOutPortsLocs,  out_ports_locs_size, g_cuDevice));
     checkCudaErrors(cudaMemPrefetchAsync(g_cuOutPortsVals,  out_ports_vals_size, g_cuDevice));
@@ -193,8 +197,7 @@ __device__ lut_val_t get_output(lut_val_t * outputs, lut_addr_t a)
 }
 
 __global__ void simSimul_cuda(
-    const lut_cfg_t     * cfg,
-    const lut_addr_t    * addrs,
+    const lut_info_t    * infos,
     lut_val_t           * outputs, 
     const int           start_lut,
     const int           N
@@ -207,30 +210,44 @@ __global__ void simSimul_cuda(
     for(int i=blockIdx.x * blockDim.x + threadIdx.x; i < N; i += blockDim.x * gridDim.x){
         int lut_id = start_lut + i;
 
-        lut_cfg_t C     = cfg[lut_id];
-        lut_val_t i0    = get_output(outputs, addrs[lut_id*4]);
-        lut_val_t i1    = get_output(outputs, addrs[lut_id*4 + 1]);
-        lut_val_t i2    = get_output(outputs, addrs[lut_id*4 + 2]);
-        lut_val_t i3    = get_output(outputs, addrs[lut_id*4 + 3]);
-        int sh = i3 | (i2 << 1) | (i1 << 2) | (i0 << 3);
-
-        lut_val_t outv = outputs[lut_id];
-        lut_val_t old_d = outv & 1u;
-        lut_val_t new_d = (C >> sh) & 1u;
-
-#if DEBUG==1
-        printf("start_lut: %d, i: %d, id: %d, N: %d, new_d: %d <- i0(%d), i1(%d), i2(%d), i3(%d), a0(%d), a1(%d), a2(%d), a3(%d)\n", 
-                start_lut, i, lut_id, N, new_d, i0, i1, i2, i3, addrs[lut_id*4], addrs[lut_id*4+1], addrs[lut_id*4+2], addrs[lut_id*4+3]);
-#endif
-
-        if (old_d != new_d) {
-            if (new_d == 1){
-                outputs[lut_id] = outv | 1;
-            }
-            else{
-                outputs[lut_id] = outv & 0xfffffffe;
+        lut_info_t  info  = infos[lut_id];
+        lut_cfg_t   C     = info.cfg;
+        bool        is_ff = info.is_ff;
+        
+        int sh = 0;
+        lut_val_t ix;
+        for(int i=0;i<NR_LUT_INPUTS;++i){
+            sh <<= 1;
+            ix = 0;
+            if (info.addrs[i] != 0){ 
+                ix  = get_output(outputs, info.addrs[i]);
+                sh  |= ix;
             }
         }
+
+        lut_val_t   new_d = (C >> sh) & 1u;
+
+        if (is_ff){
+            lut_val_t outv = outputs[lut_id];
+            lut_val_t old_d = outv & 1u;
+    
+            if (old_d != new_d) {
+                if (new_d == 1){
+                    outputs[lut_id] = outv | 1;
+                }
+                else{
+                    outputs[lut_id] = outv & 0xfffffffe;
+                }
+            }
+#if DEBUG==1
+            printf("start_lut: %d, i: %d, id: %d, N: %d, new_d: %d <- i0(%d), i1(%d), i2(%d), i3(%d), a0(%d), a1(%d), a2(%d), a3(%d)\n", 
+                    start_lut, i, lut_id, N, new_d, i0, i1, i2, i3, addrs[lut_id*4], addrs[lut_id*4+1], addrs[lut_id*4+2], addrs[lut_id*4+3]);
+#endif
+        }
+        else{
+            outputs[lut_id] = new_d;
+        }
+
     }
 }
 
@@ -307,7 +324,7 @@ void simulBegin_cuda(
         blockSize = g_blockSize;
         numBlocks = (n+blockSize-1)/blockSize;
 
-        simSimul_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Cfg, g_cuLUTs_Addrs, g_cuLUTs_Outputs, 0, n);
+        simSimul_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Infos, g_cuLUTs_Outputs, 0, n);
 
         n = luts.size();
         blockSize = g_blockSize;
@@ -348,7 +365,7 @@ void simulCycle_cuda(
         blockSize = g_blockSize;
         numBlocks = g_numBlocks;
 
-        simSimul_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Cfg, g_cuLUTs_Addrs, g_cuLUTs_Outputs, step_starts[depth], n);
+        simSimul_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Infos, g_cuLUTs_Outputs, step_starts[depth], n);
     }
 
     n = luts.size();
@@ -423,8 +440,7 @@ void simulPrintOutput_cuda(const vector<pair<string, int> >& outbits, int nr)
 
 void simulTerminate_cuda()
 {
-    cudaFree(g_cuLUTs_Cfg);
-    cudaFree(g_cuLUTs_Addrs);
+    cudaFree(g_cuLUTs_Infos);
     cudaFree(g_cuLUTs_Outputs);
     cudaFree(g_cuOutPortsLocs);
     cudaFree(g_cuOutPortsVals);
