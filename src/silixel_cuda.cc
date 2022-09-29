@@ -433,7 +433,9 @@ int main(int argc, char **argv)
     buildFanout(g_luts, g_cpu_fanout);
 
     profileHistogram(g_luts);
-    profileInputs(g_luts);
+    profileFFs(g_luts);
+    profileLocality(g_luts, g_step_starts[1], g_step_ends[1]);
+    profileOptimizeLUTs(g_luts, g_step_starts[1], g_step_ends[1]);
 
     int rank = 0;
     for (auto op : outbits) {

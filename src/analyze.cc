@@ -65,23 +65,40 @@ using namespace std;
 // Returns whether something changed.
 bool analyzeStep(const vector<t_lut>& luts,vector<int>& _depths)
 {
+
   bool changed = false;
+
+  // Go through all luts.
   for (int l=0;l<luts.size();++l) {
+
     // read input depths
     unsigned short cfg_idx = 0;
+
     int new_value = 0;
     for (int i=0;i<4;++i) {
+      // For each LUT input...
+
       if (luts[l].inputs[i] > -1) {
+        // LUT input is connected to another LUT...
+
+        // other_value will be the depth of the previous LUT. If this input
+        // of the current LUT comes from the Q output of a previous LUT, then
+        // the depth is 0.
         int other_value = 0;
         if ((luts[l].inputs[i] & 1) == 0) {
+          // LUT input is connected to the D output of another LUT, so
+          // get the depth from the previous LUT. It will soon be incremented.
           other_value = _depths[(luts[l].inputs[i] >> 1)];
         }
         if (other_value < std::numeric_limits<int>::max()) {
           ++other_value;
         }
+
+        // new_value is the largest depth of all the inputs to the LUT.
         new_value = max(new_value , other_value);
       }
     }
+
     // update output depth if changed
     if (_depths[l] != new_value) {
       _depths[l] = new_value;
@@ -103,10 +120,14 @@ void analyze(
   vector<int>&      _step_ends,
   vector<uchar>&    _depths)
 {
+  // Depths has 1 entry per LUT. 
+  // For each LUT, it contains the maximum logic level to get there.
+  // Initially, an almost infinite logic depth is assumed.
   vector<int> lut_depths;
   lut_depths.resize(_luts.size(),std::numeric_limits<int>::max());
+
   /// iterate the analysis step
-  // propagates combinational depth from Q outputs
+  // propagates combinational depth starting from all LUTs that have a FF (Q output) as input.
   bool changed = true;
   int maxiter = 1024;
   while (changed && maxiter-- > 0) {
@@ -116,9 +137,17 @@ void analyze(
     fprintf(stderr, "cannot perform analysis, combinational loop in design?");
     exit(-1);
   }
+
+  // We now know for each LUT there logic level, but they are in initial order.
+  // We need them to be sorted by LUT depth.  This means that LUTs will be swapped inside the
+  // vector of LUTs.
+
   // reorder by increasing depth
+
+  // Step 1: For each LUT, create a pair with <depth, original LUT id>. Also calculate that max_depth while we're at it.
   vector<pair<int, int> > source;
   source.resize(_luts.size());
+
   int max_depth = 0;
   for (int l = 0; l < _luts.size(); ++l) {
     source[l] = make_pair(lut_depths[l], l); // depth,id
@@ -134,10 +163,13 @@ void analyze(
   // const LUTs are placed at depth 0, which is not simulated
   // we can only consider const if the inputs where not initialized, otherwise
   // there may be an on-purpose cascade of FF from the initialization point
+
+  // with_init contains all the D or Q LUTs that have a fixed value of 1.
   set<int> with_init;
   for (auto one : _ones) {
     with_init.insert(one);
   }
+
   // promote 0-depth cells with init to 1-depth (non const)
   for (int l = 0; l < _luts.size(); ++l) {
     if (source[l].first == 0) {
@@ -147,6 +179,7 @@ void analyze(
       }
     }
   }
+
   // convert d-depth cells using only 0-depth const cells as 0-depth (const)
   for (int depth = 1; depth <= max_depth; depth++) {
     for (int l = 0; l < _luts.size(); ++l) {
@@ -155,7 +188,8 @@ void analyze(
         for (int i = 0; i < 4; ++i) {
           if (_luts[l].inputs[i] > -1) {
             if (with_init.count(_luts[l].inputs[i]) != 0) {
-              no_init_input = false; break;
+              no_init_input = false; 
+              break;
             }
           }
         }
