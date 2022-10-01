@@ -95,8 +95,8 @@ lut_val_t       * g_cuOutPortsVals;
 const int g_blockSize   = 1;
 const int g_numBlocks   = 1;
 #else
-const int g_blockSize   = 128;
-const int g_numBlocks   = 256;
+const int g_blockSize   = 512;
+const int g_numBlocks   = 1024;
 #endif
 
 int rounded_n(int n)
@@ -297,7 +297,7 @@ void simulBegin_cuda(
     //numBlocks = (n+blockSize-1)/blockSize;
 
     blockSize = g_blockSize;
-    numBlocks = g_numBlocks;
+    numBlocks = min(g_numBlocks, (n+blockSize-1)/blockSize);
 
     simInit_cuda<<<numBlocks,blockSize>>>(g_cuOutInits, g_cuLUTs_Outputs, n);
 
@@ -346,7 +346,7 @@ void simulCycle_cuda(
         //numBlocks = (n+blockSize-1)/blockSize;
 
         blockSize = g_blockSize;
-        numBlocks = g_numBlocks;
+        numBlocks = min(g_numBlocks, (n+blockSize-1)/blockSize);
 
         simSimul_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Cfg, g_cuLUTs_Addrs, g_cuLUTs_Outputs, step_starts[depth], n);
     }
