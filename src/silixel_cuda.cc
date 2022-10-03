@@ -441,7 +441,7 @@ int main(int argc, char **argv)
     g_OutPortsValues.allocate(rank * CYCLE_BUFFER_LEN);
 
     /// GPU buffers init
-    simulInit_cuda(g_luts, g_ones);
+    simulInit_cuda(g_luts, g_ones, g_step_starts, g_step_ends);
 
     // init CPU simulation
     simulInit_cpu(g_luts, g_step_starts, g_step_ends, g_ones, g_cpu_computelists, g_cpu_outputs);

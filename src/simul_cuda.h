@@ -52,8 +52,10 @@ using namespace std;
 
 
 void simulInit_cuda(
-  const vector<t_lut>& luts,
-  const vector<int>&   ones
+  const vector<t_lut>&      luts,
+  const vector<int>&        ones,
+  const vector<int>&        step_starts,
+  const vector<int>&        step_ends
 );
 
 void simulBegin_cuda(
