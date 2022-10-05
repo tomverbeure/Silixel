@@ -57,6 +57,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "read.h"
 #include "analyze.h"
 #include "profile.h"
+#include "optimize.h"
 #include "simul_cpu.h"
 #include "simul_gpu.h"
 #include "simul_cuda.h"
@@ -360,7 +361,7 @@ void mainRender()
   ImGui::Checkbox("Simulate using CUDA", &g_Use_CUDA);
   ImGui::Text("%5.1f KHz %5.1f usec / cycle", g_Hz/1000.0, g_UsecPerCycle);
   ImGui::Text("simulated cycle: %6d", g_Cycle);
-  ImGui::Text("simulated LUT4+FF %7d", g_luts.size());
+  ImGui::Text("simulated LUT4+FF %7zu", g_luts.size());
   ImGui::Text("screen row %3d",g_Y);
   if (!g_OutPortString.empty()) {
     ImGui::Text("outputs: %s", g_OutPortString.c_str());
@@ -428,12 +429,13 @@ int main(int argc, char **argv)
     vector<pair<string,int> > outbits;
     readDesign(g_luts, outbits, g_ones);
 
+    optimizeCache(g_luts, outbits, g_ones);
+
     analyze(g_luts, outbits, g_ones, g_step_starts, g_step_ends, g_cpu_depths);
 
     buildFanout(g_luts, g_cpu_fanout);
 
     profileHistogram(g_luts);
-    profileBoost(g_luts);
 
     int rank = 0;
     for (auto op : outbits) {

@@ -368,7 +368,18 @@ int main(int argc, char **argv)
 
     /// load up design
     vector<pair<string,int> > outbits;
+
+    // g_luts   -> all the LUTs, already with integrated FF
+    // outbits  -> signal name and integer index with LUT D and Q values that are considered an output
+    // g_ones   -> integer index of the LUTs for which the FF is initial value is set to 1.
     readDesign(g_luts, outbits, g_ones);
+
+    // After readDesign, all latches and LUTs are already converted in LUTs with FFs.
+    // There hasn't been any sorted yet into logic levels, but that sorting won't do any
+    // reordering within the same logic level.
+    // So we can do RCM here.
+
+
 
     analyze(g_luts, outbits, g_ones, g_step_starts, g_step_ends, g_cpu_depths);
 

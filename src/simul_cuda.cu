@@ -240,12 +240,14 @@ void simulInit_cuda(
 {
     int n_luts = rounded_n((int)luts.size());
 
+#if 0
     mapGlobalToShared(luts, step_starts[2], step_ends[2]);
 
     for(int i=1; i<step_starts.size(); ++i){
         printf("============================ step %d (%d -> %d)\n", i, step_starts[i], step_ends[i]);
         mapGlobalToShared(luts, step_starts[i], step_ends[i]);
     }
+#endif
     
     int cfg_size            = n_luts                 * sizeof(t_lut_cfg);
     int addrs_size          = n_luts * NR_LUT_INPUTS * sizeof(t_lut_addr);
