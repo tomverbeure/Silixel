@@ -170,15 +170,18 @@ void optimizeCache(
     }
 
     for(size_type i=0; i != outbits.size(); ++i){
-       bool is_ff = outbits[i].second & 1;
-       int  node  =  outbits[i].second >> 1;
+        bool is_ff = outbits[i].second & 1;
+        int  node  =  outbits[i].second >> 1;
 
         perm_outbits[i].first  = outbits[i].first;
         perm_outbits[i].second = (perm[node] << 1) | is_ff;
     }
 
     for(size_type i=0; i != ones.size(); ++i){
-        perm_ones[i] = perm[ones[i]];
+        bool is_ff = ones[i] & 1;
+        int  node  =  ones[i] >> 1;
+
+        perm_ones[i] = perm[node] << 1 | is_ff;
     }
 
     for(size_type i=0; i != luts.size(); ++i){

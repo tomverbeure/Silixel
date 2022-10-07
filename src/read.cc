@@ -85,6 +85,9 @@ void buildSimulData(
   for (const auto& o : output2src) {
     if (o.second[0]) { // latch
       // find input type
+      if (!output2src.count(_blif.latches[o.second[1]].input)){
+        sl_assert(output2src.count(_blif.latches[o.second[1]].input));
+      }
       sl_assert(output2src.count(_blif.latches[o.second[1]].input));
       const auto& I = output2src.find(_blif.latches[o.second[1]].input);
       if (I->second[0]) {
