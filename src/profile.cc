@@ -3,6 +3,7 @@
 #include <map>
 #include <unordered_map>
 #include <algorithm>
+#include <cstdlib>
 
 
 
@@ -12,22 +13,26 @@ void profileHistogram(const vector<t_lut>& luts)
 {
     // For each lut, keep track to which other luts the output goes.
     // Use a map so that we can build up the structed out-of-order.
-    map<int,vector<int>> luts_fanouts;
+    unordered_map<int,vector<int>> luts_fanouts;
 
     for(int lid = 0; lid < luts.size(); ++lid){
         for(int i=0; i<4; ++i){
             int input_id = luts[lid].inputs[i];
+            if (input_id == -1)
+                continue;
+
+            input_id >>= 1;
 
             if (luts_fanouts.find(input_id) == luts_fanouts.end() ){
                 luts_fanouts[input_id].push_back(lid);
             }
             else{
-                vector<int> &v = luts_fanouts[input_id];
+                vector<int> &fanouts = luts_fanouts[input_id];
 
                 // The same LUT output might go multiple times to the same LUT. Only add it
                 // if the destination LUT isn't already part of the fanout.
-                if (std::find(v.begin(), v.end(), lid) == v.end()){
-                    v = luts_fanouts[input_id];
+                if (std::find(fanouts.begin(), fanouts.end(), lid) == fanouts.end()){
+                    fanouts.push_back(lid);
                 }
             }
         }
@@ -241,5 +246,60 @@ void profileBoost(const vector<t_lut>& luts)
     exit(0);
 }
 
+
+void profileInputDifferences(
+    const vector<t_lut>&    luts, 
+    const vector<int>&      step_starts,
+    const vector<int>&      step_ends,
+    int level
+    )
+{
+   unordered_map<int, int> warp_deltas;
+
+    for(int lid_warp=step_starts[level]; lid_warp <= step_ends[level]; lid_warp += 32){
+         unordered_multiset<int> input_ids;
+
+        // Get all input ids within the same warp
+        for(int lid=lid_warp; lid <= min(step_ends[level], lid_warp+31); ++lid){
+            for(int i=0; i<4; ++i){
+                int input_id = luts[lid].inputs[i];
+                if (input_id == -1)
+                    continue;
+
+                input_id >>= 1;
+                input_ids.insert(input_id);
+            }
+        }
+
+        vector<int> input_ids_sorted(input_ids.begin(), input_ids.end());
+        sort(input_ids_sorted.begin(), input_ids_sorted.end());
+
+        int prev_id = -1;
+        for(auto id: input_ids_sorted){
+            if (prev_id == -1){
+                prev_id = id;
+                continue;
+            }
+
+            int delta = abs(prev_id-id);
+
+            if (warp_deltas.find(delta) == warp_deltas.end()){
+                warp_deltas[delta] = 1;
+            }
+            else{
+                warp_deltas[delta] += 1;
+            }
+        }
+    }
+
+    vector<int> deltas_ordered;
+    for(auto w: warp_deltas)
+        deltas_ordered.push_back(w.first);
+    sort(deltas_ordered.begin(), deltas_ordered.end());
+
+    for(auto d: deltas_ordered){
+        printf("delta %d: %d\n", d, warp_deltas[d]);
+    }
+}
 
 

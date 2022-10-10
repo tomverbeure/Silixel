@@ -429,9 +429,18 @@ int main(int argc, char **argv)
     vector<pair<string,int> > outbits;
     readDesign(g_luts, outbits, g_ones);
 
+#if 1
+    analyze(g_luts, outbits, g_ones, g_step_starts, g_step_ends, g_cpu_depths);
+    printf("Level differences before optimization:\n");
+    profileInputDifferences(g_luts, g_step_starts, g_step_ends, 9);
+#endif
+
     optimizeCache(g_luts, outbits, g_ones);
 
     analyze(g_luts, outbits, g_ones, g_step_starts, g_step_ends, g_cpu_depths);
+
+    printf("Level differences after optimization:\n");
+    profileInputDifferences(g_luts, g_step_starts, g_step_ends, 9);
 
     buildFanout(g_luts, g_cpu_fanout);
 

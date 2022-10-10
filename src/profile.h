@@ -9,5 +9,11 @@ using namespace std;
 
 void profileHistogram(const vector<t_lut>& luts);
 void profileBoost(const vector<t_lut>& luts);
+void profileInputDifferences(
+    const vector<t_lut>&    luts, 
+    const vector<int>&      step_starts,
+    const vector<int>&      step_ends,
+    int level
+    );
 
 #endif
