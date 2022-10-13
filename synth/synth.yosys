@@ -55,8 +55,8 @@ opt_clean
 
 opt -fast -full -nodffe -nosdff
 memory_map
-#opt -full -nodffe -nosdff
-opt -fast -full -nodffe -nosdff
+opt -full -nodffe -nosdff
+#opt -fast -full -nodffe -nosdff
 techmap
 opt -fast -nodffe -nosdff
 abc -fast -lut 4

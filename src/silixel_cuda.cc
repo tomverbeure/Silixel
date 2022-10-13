@@ -429,22 +429,32 @@ int main(int argc, char **argv)
     vector<pair<string,int> > outbits;
     readDesign(g_luts, outbits, g_ones);
 
-#if 1
+#if 0
     analyze(g_luts, outbits, g_ones, g_step_starts, g_step_ends, g_cpu_depths);
     printf("Level differences before optimization:\n");
     profileInputDifferences(g_luts, g_step_starts, g_step_ends, 9);
 #endif
 
+//    profileDumpLouvainGraph(g_luts);
+    profileDumpLeidenGraph(g_luts);
+    exit(0);
+
+#if 0
     optimizeCache(g_luts, outbits, g_ones);
+#endif
 
     analyze(g_luts, outbits, g_ones, g_step_starts, g_step_ends, g_cpu_depths);
 
+#if 0
     printf("Level differences after optimization:\n");
     profileInputDifferences(g_luts, g_step_starts, g_step_ends, 9);
+#endif
 
     buildFanout(g_luts, g_cpu_fanout);
 
+#if 0
     profileHistogram(g_luts);
+#endif
 
     int rank = 0;
     for (auto op : outbits) {

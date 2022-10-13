@@ -1,4 +1,29 @@
 
+# Louvain
+
+* Generate graph.txt with all edges
+* Convert to .bin file: 
+
+    ../louvain-generic/convert -i louvain_input.vga_demo.txt -o louvain_input.vga_demo.bin
+
+* Run Louvain and output the full graph (by using `-l -1`). This can take a long time a netlist with
+  a signals that have a huge fanout.
+
+    ../louvain-generic/louvain louvain_input.vga_demo.bin -l -1 > graph.tree
+
+* Run hierarchy to see how each original node is grouped into the same community for a given level:
+
+    ../louvain-generic/hierarchy graph.tree -l 2
+
+# Louvain notes
+
+* The algorithm gets much slower when there are nodes with a huge fanout. Need to do experiments where
+  nodes with large fanout don't have a fanout (only an edge to itself?)
+
+* execution time: 
+    * blaze netlist without high fanout nets removed:     1569s
+    * blaze netlist with high fanout nets removed (>500): 
+
 # SM notes
 
 * Pascal GP10x:
@@ -37,3 +62,17 @@
     * 46 SMs
 
 * Copy and compute pattern: https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#copy_and_compute_pattern
+
+# Exploration tool (or just use Yosys?)
+
+* Read netlist
+* Write as binary for speed?
+* Start as 1 community
+* Split into communities (Louvain)
+* Exclude high fanout nets as an optimization
+* Run Cuthill-McKee on each of community individually
+* Statistics/histogram about fetch distance within a warp
+
+
+
+

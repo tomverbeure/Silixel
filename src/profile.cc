@@ -247,6 +247,11 @@ void profileBoost(const vector<t_lut>& luts)
 }
 
 
+// Loop through all LUTs of a level in steps of 32 (size of a warp),
+// calculate the distances between inputs siganls after sorting, and 
+// create a histogram.
+// This is supposed to give an indication of how efficient the GPU should
+// be able to fetch the data from DRAM.
 void profileInputDifferences(
     const vector<t_lut>&    luts, 
     const vector<int>&      step_starts,
@@ -303,3 +308,42 @@ void profileInputDifferences(
 }
 
 
+void profileDumpLouvainGraph(
+    const vector<t_lut>&    luts
+    )
+{
+    for(int lid=0; lid<luts.size(); ++lid){
+        for(int i=0; i<4; ++i){
+            int input_id = luts[lid].inputs[i];
+            if (input_id == -1)
+                continue;
+            input_id >>= 1;
+
+            printf("%d %d\n", input_id, lid);
+        }
+    }
+
+}
+
+void profileDumpLeidenGraph(
+    const vector<t_lut>&    luts
+    )
+{
+    unordered_map<long, bool> edge_tags;
+
+    for(int lid=0; lid<luts.size(); ++lid){
+        for(int i=0; i<4; ++i){
+            int input_id = luts[lid].inputs[i];
+            if (input_id == -1)
+                continue;
+            input_id >>= 1;
+
+            long edge_tag = min(input_id, lid) + max(input_id, lid) * luts.size();
+            if (edge_tags.find(edge_tag) == edge_tags.end()){
+                printf("%d\t%d\n", input_id, lid);
+                edge_tags[edge_tag] = true;
+            }
+        }
+    }
+
+}

@@ -124,6 +124,7 @@ void optimizeCache(
         cout << endl;
 #endif
 
+        // perm[i] contains the new location of LUT[i].
         for (size_type c = 0; c != inv_perm.size(); ++c){
             perm[index_map[inv_perm[c]]] = c;
         }
@@ -143,9 +144,6 @@ void optimizeCache(
                   << std::endl;
     }
 
-    vector<t_lut>                           perm_luts(luts.size());
-    std::vector<pair<std::string, int> >    perm_outbits(outbits.size());
-    vector<int>                             perm_ones(ones.size());
 
     if (0) {
         int lut_idx = 0;
@@ -155,6 +153,16 @@ void optimizeCache(
         }
         printf("\n");
     }
+
+    //============================================================
+    // Shuffle LUTs around, as calculated by Cuthill-McKee
+    //============================================================
+
+    // Instead of in-place shuffling, do a copy into a new LUTs vector, because
+    // I don't quite understand the memory model...
+    vector<t_lut>                           perm_luts(luts.size());
+    std::vector<pair<std::string, int> >    perm_outbits(outbits.size());
+    vector<int>                             perm_ones(ones.size());
 
     for(size_type i=0; i != perm.size(); ++i){
         perm_luts[perm[i]].cfg    = luts[i].cfg;
@@ -184,6 +192,7 @@ void optimizeCache(
         perm_ones[i] = perm[node] << 1 | is_ff;
     }
 
+    //  Copy everything back to the original vectors.
     for(size_type i=0; i != luts.size(); ++i){
         luts[i] = perm_luts[i];
     }
@@ -206,6 +215,5 @@ void optimizeCache(
     }
 
 }
-
 
 

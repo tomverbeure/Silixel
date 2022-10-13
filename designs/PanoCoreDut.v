@@ -1,6 +1,6 @@
 // Generator : SpinalHDL v1.3.0    git head : a4aa217960e9fd6394cc93913205fac49fac47d4
-// Date      : 04/10/2022, 22:01:17
-// Component : PanoCoreDut
+// Date      : 05/10/2022, 10:17:01
+// Component : Pano
 
 
 `define PcState_defaultEncoding_type [4:0]
@@ -51,8 +51,8 @@ module FpxxAdd (
       output  io_result_sign,
       output [5:0] io_result_exp,
       output [12:0] io_result_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire [1:0] _zz_33_;
   wire [1:0] _zz_34_;
   wire [1:0] _zz_35_;
@@ -598,8 +598,8 @@ module FpxxAdd (
   assign io_result_sign = sign_final_p5;
   assign io_result_exp = exp_final_p5;
   assign io_result_mant = mant_final_p5[12:0];
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       p2_vld <= 1'b0;
       p4_vld <= 1'b0;
     end else begin
@@ -612,7 +612,7 @@ module FpxxAdd (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld)begin
       op_is_zero_p2 <= op_is_zero_p0;
     end
@@ -677,8 +677,8 @@ module FpxxMul (
       output  io_result_sign,
       output [5:0] io_result_exp,
       output [12:0] io_result_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire [7:0] _zz_1_;
   wire [7:0] _zz_2_;
   wire [7:0] _zz_3_;
@@ -779,8 +779,8 @@ module FpxxMul (
   assign io_result_sign = sign_final_p2;
   assign io_result_exp = exp_final_p2;
   assign io_result_mant = mant_final_p2;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       p1_vld <= 1'b0;
       p2_vld <= 1'b0;
     end else begin
@@ -793,7 +793,7 @@ module FpxxMul (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld)begin
       op_is_zero_p1 <= op_is_zero_p0;
     end
@@ -1016,8 +1016,8 @@ module Fetch (
       output  io_rd2r_rs2_rd,
       output [4:0] io_rd2r_rs2_rd_addr,
       input   io_r2rd_stall,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  _zz_1_;
   wire  _zz_2_;
   wire  _zz_3_;
@@ -1153,8 +1153,8 @@ module Fetch (
   assign io_rd2r_rs1_rd_addr = (rf_rs1_valid ? rf_rs1_addr : (5'b00000));
   assign io_rd2r_rs2_rd_addr = (rf_rs2_valid ? rf_rs2_addr : (5'b00000));
   assign raw_stall = rf_raw_stall;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       io_f2d_valid <= 1'b0;
       io_f2d_pc <= (32'b00000000000000000000000000000000);
       io_f2d_instr <= (32'b00000000000000000000000000000000);
@@ -1269,8 +1269,8 @@ module Decode (
       input   io_e2d_stall,
       input   io_e2d_pc_jump_valid,
       input  [31:0] io_e2d_pc_jump,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  _zz_13_;
   wire [9:0] _zz_14_;
   wire [31:0] _zz_15_;
@@ -1670,8 +1670,8 @@ module Decode (
   assign d2e_nxt_rs2_imm = rs2_imm;
   assign d2e_nxt_rd_valid = ((! trap) && rd_valid);
   assign d2e_nxt_rd_addr = rd_addr_final;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       io_d2e_valid <= 1'b0;
       d2f_stall_d <= 1'b0;
       f2d_valid_d <= 1'b0;
@@ -1688,7 +1688,7 @@ module Decode (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(_zz_13_)begin
       io_d2e_pc <= d2e_nxt_pc;
       io_d2e_instr <= d2e_nxt_instr;
@@ -1737,8 +1737,8 @@ module Execute (
       output  io_data_req_wr,
       output [1:0] io_data_req_size,
       output [31:0] io_data_req_data,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  _zz_8_;
   wire [32:0] _zz_9_;
   wire [32:0] _zz_10_;
@@ -2100,8 +2100,8 @@ module Execute (
   assign e2w_nxt_rd_wr = rd_wr;
   assign e2w_nxt_rd_waddr = rd_addr;
   assign e2w_nxt_rd_wdata = rd_wdata;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       io_e2w_valid <= 1'b0;
       e2d_stall_d <= 1'b0;
     end else begin
@@ -2116,7 +2116,7 @@ module Execute (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(_zz_8_)begin
       io_e2w_ld_active <= e2w_nxt_ld_active;
       io_e2w_ld_addr_lsb <= e2w_nxt_ld_addr_lsb;
@@ -2141,8 +2141,8 @@ module RegFile (
       input   io_w2r_rd_wr,
       input  [4:0] io_w2r_rd_wr_addr,
       input  [31:0] io_w2r_rd_wr_data,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   reg [31:0] _zz_1_;
   reg [31:0] _zz_2_;
   wire [4:0] reg_init_cntr;
@@ -2151,19 +2151,19 @@ module RegFile (
   wire [4:0] rd_wr_addr;
   wire [31:0] rd_wr_data;
   reg [31:0] mem [0:31];
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(rd_wr) begin
       mem[rd_wr_addr] <= rd_wr_data;
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(io_rd2r_rs1_rd) begin
       _zz_1_ <= mem[io_rd2r_rs1_rd_addr];
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(io_rd2r_rs2_rd) begin
       _zz_2_ <= mem[io_rd2r_rs2_rd_addr];
     end
@@ -2176,8 +2176,8 @@ module RegFile (
   assign rd_wr = (reg_init_initR ? 1'b1 : io_w2r_rd_wr);
   assign rd_wr_addr = (reg_init_initR ? reg_init_cntr[4 : 0] : io_w2r_rd_wr_addr);
   assign rd_wr_data = (reg_init_initR ? (32'b00000000000000000000000000000000) : io_w2r_rd_wr_data);
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       reg_init_initR <= 1'b1;
     end else begin
       reg_init_initR <= 1'b0;
@@ -2224,8 +2224,8 @@ module Writeback (
       input  [3:0] io_e2w_rvfi_mem_wmask,
       input  [31:0] io_e2w_rvfi_mem_rdata,
       input  [31:0] io_e2w_rvfi_mem_wdata,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire [5:0] _zz_4_;
   wire [7:0] _zz_5_;
   wire [31:0] _zz_6_;
@@ -2360,15 +2360,15 @@ module Writeback (
   assign io_rd_update_rd_waddr = io_e2w_rd_waddr;
   assign io_rd_update_rd_wdata_valid = (io_e2w_valid && rd_wr);
   assign io_rd_update_rd_wdata = rd_wdata;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       w2e_stall_d <= 1'b0;
     end else begin
       w2e_stall_d <= io_w2e_stall;
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     ld_data_rsp_valid <= io_data_rsp_valid;
     ld_data_rsp_data <= io_data_rsp_data;
   end
@@ -2417,8 +2417,8 @@ module FpxxSub (
       output  io_result_sign,
       output [5:0] io_result_exp,
       output [12:0] io_result_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  u_add_io_result_vld;
   wire  u_add_io_result_sign;
   wire [5:0] u_add_io_result_exp;
@@ -2438,8 +2438,8 @@ module FpxxSub (
     .io_result_sign(u_add_io_result_sign),
     .io_result_exp(u_add_io_result_exp),
     .io_result_mant(u_add_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign op_b_sign = (! io_op_b_sign);
   assign op_b_exp = io_op_b_exp;
@@ -2519,8 +2519,8 @@ module MulVecScalar (
       output  io_result_z_sign,
       output [5:0] io_result_z_exp,
       output [12:0] io_result_z_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  u_x_io_result_vld;
   wire  u_x_io_result_sign;
   wire [5:0] u_x_io_result_exp;
@@ -2545,8 +2545,8 @@ module MulVecScalar (
     .io_result_sign(u_x_io_result_sign),
     .io_result_exp(u_x_io_result_exp),
     .io_result_mant(u_x_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxMul u_y ( 
     .p0_vld(io_op_vld),
@@ -2560,8 +2560,8 @@ module MulVecScalar (
     .io_result_sign(u_y_io_result_sign),
     .io_result_exp(u_y_io_result_exp),
     .io_result_mant(u_y_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxMul u_z ( 
     .p0_vld(io_op_vld),
@@ -2575,8 +2575,8 @@ module MulVecScalar (
     .io_result_sign(u_z_io_result_sign),
     .io_result_exp(u_z_io_result_exp),
     .io_result_mant(u_z_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign io_result_vld = u_x_io_result_vld;
   assign io_result_x_sign = u_x_io_result_sign;
@@ -2620,8 +2620,8 @@ module AddVecVec (
       output  io_result_z_sign,
       output [5:0] io_result_z_exp,
       output [12:0] io_result_z_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  u_x_io_result_vld;
   wire  u_x_io_result_sign;
   wire [5:0] u_x_io_result_exp;
@@ -2646,8 +2646,8 @@ module AddVecVec (
     .io_result_sign(u_x_io_result_sign),
     .io_result_exp(u_x_io_result_exp),
     .io_result_mant(u_x_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxAdd u_y ( 
     .p0_vld(io_op_vld),
@@ -2661,8 +2661,8 @@ module AddVecVec (
     .io_result_sign(u_y_io_result_sign),
     .io_result_exp(u_y_io_result_exp),
     .io_result_mant(u_y_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxAdd u_z ( 
     .p0_vld(io_op_vld),
@@ -2676,8 +2676,8 @@ module AddVecVec (
     .io_result_sign(u_z_io_result_sign),
     .io_result_exp(u_z_io_result_exp),
     .io_result_mant(u_z_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign io_result_vld = u_x_io_result_vld;
   assign io_result_x_sign = u_x_io_result_sign;
@@ -2724,8 +2724,8 @@ module DotProduct (
       output  io_result_sign,
       output [5:0] io_result_exp,
       output [12:0] io_result_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  u_xx_io_result_vld;
   wire  u_xx_io_result_sign;
   wire [5:0] u_xx_io_result_exp;
@@ -2784,8 +2784,8 @@ module DotProduct (
     .io_result_sign(u_xx_io_result_sign),
     .io_result_exp(u_xx_io_result_exp),
     .io_result_mant(u_xx_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxMul u_yy ( 
     .p0_vld(io_op_vld),
@@ -2799,8 +2799,8 @@ module DotProduct (
     .io_result_sign(u_yy_io_result_sign),
     .io_result_exp(u_yy_io_result_exp),
     .io_result_mant(u_yy_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxMul u_zz ( 
     .p0_vld(io_op_vld),
@@ -2814,8 +2814,8 @@ module DotProduct (
     .io_result_sign(u_zz_io_result_sign),
     .io_result_exp(u_zz_io_result_exp),
     .io_result_mant(u_zz_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxAdd u_xx_yy ( 
     .p0_vld(xx_vld),
@@ -2829,8 +2829,8 @@ module DotProduct (
     .io_result_sign(u_xx_yy_io_result_sign),
     .io_result_exp(u_xx_yy_io_result_exp),
     .io_result_mant(u_xx_yy_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxAdd u_xx_yy_zz ( 
     .p0_vld(xx_yy_vld),
@@ -2844,8 +2844,8 @@ module DotProduct (
     .io_result_sign(u_xx_yy_zz_io_result_sign),
     .io_result_exp(u_xx_yy_zz_io_result_exp),
     .io_result_mant(u_xx_yy_zz_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign xx_vld = u_xx_io_result_vld;
   assign xx_sign = u_xx_io_result_sign;
@@ -2871,7 +2871,7 @@ module DotProduct (
   assign io_result_sign = xx_yy_zz_sign;
   assign io_result_exp = xx_yy_zz_exp;
   assign io_result_mant = xx_yy_zz_mant;
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     zz_delay_1_sign <= zz_sign;
     zz_delay_1_exp <= zz_exp;
     zz_delay_1_mant <= zz_mant;
@@ -2891,8 +2891,8 @@ module FpxxRSqrt (
       output  io_result_sign,
       output [5:0] io_result_exp,
       output [12:0] io_result_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   reg [13:0] _zz_1_;
   wire [6:0] _zz_2_;
   wire [6:0] _zz_3_;
@@ -2942,9 +2942,9 @@ module FpxxRSqrt (
   assign _zz_14_ = (7'b0000000);
   assign _zz_15_ = exp_adj_p1;
   initial begin
-    $readmemb("PanoCoreDut.v_toplevel_u_pano_core_rt_u_sphere_intersect_u_normalize_u_rsqrt_rsqrt_table.bin",rsqrt_table);
+    $readmemb("Pano.v_toplevel_core_u_pano_core_rt_u_sphere_intersect_u_normalize_u_rsqrt_rsqrt_table.bin",rsqrt_table);
   end
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld) begin
       _zz_1_ <= rsqrt_table[rsqrt_addr_p0];
     end
@@ -2989,8 +2989,8 @@ module FpxxRSqrt (
   assign io_result_sign = sign_final_p1;
   assign io_result_exp = exp_final_p1;
   assign io_result_mant = mant_final_p1;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       p1_vld <= 1'b0;
     end else begin
       if(1'b1)begin
@@ -2999,7 +2999,7 @@ module FpxxRSqrt (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld)begin
       op_zero_p1 <= op_zero_p0;
     end
@@ -3172,8 +3172,8 @@ module FpxxRSqrt_1_ (
       output  io_result_sign,
       output [5:0] io_result_exp,
       output [12:0] io_result_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   reg [13:0] _zz_1_;
   wire [6:0] _zz_2_;
   wire [6:0] _zz_3_;
@@ -3223,9 +3223,9 @@ module FpxxRSqrt_1_ (
   assign _zz_14_ = (7'b0000000);
   assign _zz_15_ = exp_adj_p1;
   initial begin
-    $readmemb("PanoCoreDut.v_toplevel_u_pano_core_rt_u_shadow_sphere_intersect_u_normalize_u_rsqrt_rsqrt_table.bin",rsqrt_table);
+    $readmemb("Pano.v_toplevel_core_u_pano_core_rt_u_shadow_sphere_intersect_u_normalize_u_rsqrt_rsqrt_table.bin",rsqrt_table);
   end
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld) begin
       _zz_1_ <= rsqrt_table[rsqrt_addr_p0];
     end
@@ -3270,8 +3270,8 @@ module FpxxRSqrt_1_ (
   assign io_result_sign = sign_final_p1;
   assign io_result_exp = exp_final_p1;
   assign io_result_mant = mant_final_p1;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       p1_vld <= 1'b0;
     end else begin
       if(1'b1)begin
@@ -3280,7 +3280,7 @@ module FpxxRSqrt_1_ (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld)begin
       op_zero_p1 <= op_zero_p0;
     end
@@ -3347,8 +3347,8 @@ module MR1 (
       output [31:0] data_req_data,
       input   data_rsp_valid,
       input  [31:0] data_rsp_data,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  _zz_1_;
   wire [63:0] _zz_2_;
   wire [31:0] _zz_3_;
@@ -3454,8 +3454,8 @@ module MR1 (
     .io_rd2r_rs2_rd(fetch_1__io_rd2r_rs2_rd),
     .io_rd2r_rs2_rd_addr(fetch_1__io_rd2r_rs2_rd_addr),
     .io_r2rd_stall(reg_file_io_r2rd_stall),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   Decode decode_1_ ( 
     .io_f2d_valid(fetch_1__io_f2d_valid),
@@ -3483,8 +3483,8 @@ module MR1 (
     .io_e2d_stall(execute_1__io_e2d_stall),
     .io_e2d_pc_jump_valid(execute_1__io_e2d_pc_jump_valid),
     .io_e2d_pc_jump(execute_1__io_e2d_pc_jump),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   Execute execute_1_ ( 
     .io_d2e_valid(decode_1__io_d2e_valid),
@@ -3519,8 +3519,8 @@ module MR1 (
     .io_data_req_wr(execute_1__io_data_req_wr),
     .io_data_req_size(execute_1__io_data_req_size),
     .io_data_req_data(execute_1__io_data_req_data),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   RegFile reg_file ( 
     .io_rd2r_rs1_rd(fetch_1__io_rd2r_rs1_rd),
@@ -3533,8 +3533,8 @@ module MR1 (
     .io_w2r_rd_wr(wb_io_w2r_rd_wr),
     .io_w2r_rd_wr_addr(wb_io_w2r_rd_wr_addr),
     .io_w2r_rd_wr_data(wb_io_w2r_rd_wr_data),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   Writeback wb ( 
     .io_e2w_valid(execute_1__io_e2w_valid),
@@ -3574,8 +3574,8 @@ module MR1 (
     .io_e2w_rvfi_mem_wmask(_zz_17_),
     .io_e2w_rvfi_mem_rdata(_zz_18_),
     .io_e2w_rvfi_mem_wdata(_zz_19_),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign instr_req_valid = fetch_1__io_instr_req_valid;
   assign instr_req_addr = fetch_1__io_instr_req_addr;
@@ -3601,8 +3601,8 @@ module FpxxMul_57_ (
       output  io_result_sign,
       output [5:0] io_result_exp,
       output [12:0] io_result_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire [7:0] _zz_1_;
   wire [7:0] _zz_2_;
   wire [7:0] _zz_3_;
@@ -3695,8 +3695,8 @@ module FpxxMul_57_ (
   assign io_result_sign = sign_final_p2;
   assign io_result_exp = exp_final_p2;
   assign io_result_mant = mant_final_p2;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       p2_vld <= 1'b0;
     end else begin
       if(1'b1)begin
@@ -3705,7 +3705,7 @@ module FpxxMul_57_ (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld)begin
       op_is_zero_p2 <= op_is_zero_p0;
     end
@@ -3732,8 +3732,8 @@ module SInt2Fpxx (
       output  io_result_sign,
       output [5:0] io_result_exp,
       output [12:0] io_result_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire [1:0] _zz_48_;
   wire [1:0] _zz_49_;
   wire [1:0] _zz_50_;
@@ -4289,8 +4289,8 @@ module SInt2Fpxx (
   assign io_result_sign = sign_final_p2;
   assign io_result_exp = exp_final_p2;
   assign io_result_mant = mant_final_p2;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       p1_vld <= 1'b0;
       p2_vld <= 1'b0;
     end else begin
@@ -4303,7 +4303,7 @@ module SInt2Fpxx (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld)begin
       sign_p1 <= sign_p0;
     end
@@ -4331,8 +4331,8 @@ module Fpxx2SInt (
       output  io_result_vld,
       output [19:0] io_result,
       output  io_result_ovfl,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire [7:0] _zz_2_;
   wire [7:0] _zz_3_;
   wire [14:0] _zz_4_;
@@ -4393,8 +4393,8 @@ module Fpxx2SInt (
   assign io_result_vld = p1_vld;
   assign io_result = int_p1;
   assign io_result_ovfl = ovfl_p1;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       p1_vld <= 1'b0;
     end else begin
       if(1'b1)begin
@@ -4403,7 +4403,7 @@ module Fpxx2SInt (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld)begin
       ge0_p1 <= ge0_p0;
     end
@@ -4424,8 +4424,8 @@ module SInt2Fpxx_1_ (
       output  io_result_sign,
       output [5:0] io_result_exp,
       output [12:0] io_result_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire [1:0] _zz_28_;
   wire [1:0] _zz_29_;
   wire [1:0] _zz_30_;
@@ -4767,8 +4767,8 @@ module SInt2Fpxx_1_ (
   assign io_result_sign = sign_final_p2;
   assign io_result_exp = exp_final_p2;
   assign io_result_mant = mant_final_p2;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       p1_vld <= 1'b0;
       p2_vld <= 1'b0;
     end else begin
@@ -4781,7 +4781,7 @@ module SInt2Fpxx_1_ (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld)begin
       sign_p1 <= sign_p0;
     end
@@ -4808,8 +4808,8 @@ module SInt2Fpxx_2_ (
       output  io_result_sign,
       output [5:0] io_result_exp,
       output [12:0] io_result_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire [1:0] _zz_26_;
   wire [1:0] _zz_27_;
   wire [1:0] _zz_28_;
@@ -5128,8 +5128,8 @@ module SInt2Fpxx_2_ (
   assign io_result_sign = sign_final_p2;
   assign io_result_exp = exp_final_p2;
   assign io_result_mant = mant_final_p2;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       p1_vld <= 1'b0;
       p2_vld <= 1'b0;
     end else begin
@@ -5142,7 +5142,7 @@ module SInt2Fpxx_2_ (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld)begin
       sign_p1 <= sign_p0;
     end
@@ -5216,8 +5216,8 @@ module FpxxRSqrt_2_ (
       output  io_result_sign,
       output [5:0] io_result_exp,
       output [12:0] io_result_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   reg [13:0] _zz_1_;
   wire [6:0] _zz_2_;
   wire [6:0] _zz_3_;
@@ -5267,9 +5267,9 @@ module FpxxRSqrt_2_ (
   assign _zz_14_ = (7'b0000000);
   assign _zz_15_ = exp_adj_p1;
   initial begin
-    $readmemb("PanoCoreDut.v_toplevel_u_pano_core_rt_u_normalize_ray_u_rsqrt_rsqrt_table.bin",rsqrt_table);
+    $readmemb("Pano.v_toplevel_core_u_pano_core_rt_u_normalize_ray_u_rsqrt_rsqrt_table.bin",rsqrt_table);
   end
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld) begin
       _zz_1_ <= rsqrt_table[rsqrt_addr_p0];
     end
@@ -5314,8 +5314,8 @@ module FpxxRSqrt_2_ (
   assign io_result_sign = sign_final_p1;
   assign io_result_exp = exp_final_p1;
   assign io_result_mant = mant_final_p1;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       p1_vld <= 1'b0;
     end else begin
       if(1'b1)begin
@@ -5324,7 +5324,7 @@ module FpxxRSqrt_2_ (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld)begin
       op_zero_p1 <= op_zero_p0;
     end
@@ -5374,8 +5374,8 @@ module SubVecVec (
       output  io_result_z_sign,
       output [5:0] io_result_z_exp,
       output [12:0] io_result_z_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  u_x_io_result_vld;
   wire  u_x_io_result_sign;
   wire [5:0] u_x_io_result_exp;
@@ -5400,8 +5400,8 @@ module SubVecVec (
     .io_result_sign(u_x_io_result_sign),
     .io_result_exp(u_x_io_result_exp),
     .io_result_mant(u_x_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxSub u_y ( 
     .io_op_vld(io_op_vld),
@@ -5415,8 +5415,8 @@ module SubVecVec (
     .io_result_sign(u_y_io_result_sign),
     .io_result_exp(u_y_io_result_exp),
     .io_result_mant(u_y_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxSub u_z ( 
     .io_op_vld(io_op_vld),
@@ -5430,8 +5430,8 @@ module SubVecVec (
     .io_result_sign(u_z_io_result_sign),
     .io_result_exp(u_z_io_result_exp),
     .io_result_mant(u_z_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign io_result_vld = u_x_io_result_vld;
   assign io_result_x_sign = u_x_io_result_sign;
@@ -5469,8 +5469,8 @@ module FpxxSqrt (
       output  io_result_sign,
       output [5:0] io_result_exp,
       output [12:0] io_result_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   reg [13:0] _zz_1_;
   wire [6:0] _zz_2_;
   wire [6:0] _zz_3_;
@@ -5518,9 +5518,9 @@ module FpxxSqrt (
   assign _zz_13_ = (7'b0000000);
   assign _zz_14_ = exp_adj_p1;
   initial begin
-    $readmemb("PanoCoreDut.v_toplevel_u_pano_core_rt_u_sphere_intersect_u_thc_sqrt_table.bin",sqrt_table);
+    $readmemb("Pano.v_toplevel_core_u_pano_core_rt_u_sphere_intersect_u_thc_sqrt_table.bin",sqrt_table);
   end
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld) begin
       _zz_1_ <= sqrt_table[sqrt_addr_p0];
     end
@@ -5565,8 +5565,8 @@ module FpxxSqrt (
   assign io_result_sign = sign_final_p1;
   assign io_result_exp = exp_final_p1;
   assign io_result_mant = mant_final_p1;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       p1_vld <= 1'b0;
     end else begin
       if(1'b1)begin
@@ -5575,7 +5575,7 @@ module FpxxSqrt (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld)begin
       op_zero_p1 <= op_zero_p0;
     end
@@ -5631,8 +5631,8 @@ module Intersection (
       output  io_result_z_sign,
       output [5:0] io_result_z_exp,
       output [12:0] io_result_z_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  u_mul_dir_t_io_result_vld;
   wire  u_mul_dir_t_io_result_x_sign;
   wire [5:0] u_mul_dir_t_io_result_x_exp;
@@ -5715,8 +5715,8 @@ module Intersection (
     .io_result_z_sign(u_mul_dir_t_io_result_z_sign),
     .io_result_z_exp(u_mul_dir_t_io_result_z_exp),
     .io_result_z_mant(u_mul_dir_t_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   AddVecVec u_add_origin_dir_mul_t ( 
     .io_op_vld(dir_mul_t_vld),
@@ -5748,8 +5748,8 @@ module Intersection (
     .io_result_z_sign(u_add_origin_dir_mul_t_io_result_z_sign),
     .io_result_z_exp(u_add_origin_dir_mul_t_io_result_z_exp),
     .io_result_z_mant(u_add_origin_dir_mul_t_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign dir_mul_t_vld = u_mul_dir_t_io_result_vld;
   assign dir_mul_t_x_sign = u_mul_dir_t_io_result_x_sign;
@@ -5781,7 +5781,7 @@ module Intersection (
   assign io_result_z_sign = intersection_z_sign;
   assign io_result_z_exp = intersection_z_exp;
   assign io_result_z_mant = intersection_z_mant;
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     io_ray_origin_delay_1_x_sign <= io_ray_origin_x_sign;
     io_ray_origin_delay_1_x_exp <= io_ray_origin_x_exp;
     io_ray_origin_delay_1_x_mant <= io_ray_origin_x_mant;
@@ -5828,8 +5828,8 @@ module Normalize (
       output  io_result_z_sign,
       output [5:0] io_result_z_exp,
       output [12:0] io_result_z_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  u_dot_io_result_vld;
   wire  u_dot_io_result_sign;
   wire [5:0] u_dot_io_result_exp;
@@ -5943,8 +5943,8 @@ module Normalize (
     .io_result_sign(u_dot_io_result_sign),
     .io_result_exp(u_dot_io_result_exp),
     .io_result_mant(u_dot_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxRSqrt u_rsqrt ( 
     .p0_vld(vec_dot_vld),
@@ -5955,8 +5955,8 @@ module Normalize (
     .io_result_sign(u_rsqrt_io_result_sign),
     .io_result_exp(u_rsqrt_io_result_exp),
     .io_result_mant(u_rsqrt_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   MulVecScalar u_vec_adj ( 
     .io_op_vld(denom_vld),
@@ -5982,8 +5982,8 @@ module Normalize (
     .io_result_z_sign(u_vec_adj_io_result_z_sign),
     .io_result_z_exp(u_vec_adj_io_result_z_exp),
     .io_result_z_mant(u_vec_adj_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign vec_dot_vld = u_dot_io_result_vld;
   assign vec_dot_sign = u_dot_io_result_sign;
@@ -6003,7 +6003,7 @@ module Normalize (
   assign io_result_z_sign = u_vec_adj_io_result_z_sign;
   assign io_result_z_exp = u_vec_adj_io_result_z_exp;
   assign io_result_z_mant = u_vec_adj_io_result_z_mant;
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     io_op_delay_1_x_sign <= io_op_x_sign;
     io_op_delay_1_x_exp <= io_op_x_exp;
     io_op_delay_1_x_mant <= io_op_x_mant;
@@ -6101,8 +6101,8 @@ module FpxxDiv (
       output  io_result_sign,
       output [5:0] io_result_exp,
       output [12:0] io_result_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   reg [15:0] _zz_1_;
   wire [13:0] _zz_2_;
   wire [5:0] _zz_3_;
@@ -6214,9 +6214,9 @@ module FpxxDiv (
   assign _zz_16_ = (8'b00000000);
   assign _zz_17_ = exp_adj_p6[5 : 0];
   initial begin
-    $readmemb("PanoCoreDut.v_toplevel_u_pano_core_rt_u_plane_intersect_u_div_p0r0_dot_norm_denom_div_table.bin",div_table);
+    $readmemb("Pano.v_toplevel_core_u_pano_core_rt_u_plane_intersect_u_div_p0r0_dot_norm_denom_div_table.bin",div_table);
   end
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld) begin
       _zz_1_ <= div_table[div_addr_p0];
     end
@@ -6294,8 +6294,8 @@ module FpxxDiv (
   assign io_result_sign = sign_final_p6;
   assign io_result_exp = exp_final_p6;
   assign io_result_mant = div_final_p6;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       p1_vld <= 1'b0;
       p2_vld <= 1'b0;
       p3_vld <= 1'b0;
@@ -6324,7 +6324,7 @@ module FpxxDiv (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld)begin
       yh_m_yl_p1 <= yh_m_yl_p0;
     end
@@ -6485,8 +6485,8 @@ module FpxxSqrt_1_ (
       output  io_result_sign,
       output [5:0] io_result_exp,
       output [12:0] io_result_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   reg [13:0] _zz_1_;
   wire [6:0] _zz_2_;
   wire [6:0] _zz_3_;
@@ -6534,9 +6534,9 @@ module FpxxSqrt_1_ (
   assign _zz_13_ = (7'b0000000);
   assign _zz_14_ = exp_adj_p1;
   initial begin
-    $readmemb("PanoCoreDut.v_toplevel_u_pano_core_rt_u_shadow_sphere_intersect_u_thc_sqrt_table.bin",sqrt_table);
+    $readmemb("Pano.v_toplevel_core_u_pano_core_rt_u_shadow_sphere_intersect_u_thc_sqrt_table.bin",sqrt_table);
   end
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld) begin
       _zz_1_ <= sqrt_table[sqrt_addr_p0];
     end
@@ -6581,8 +6581,8 @@ module FpxxSqrt_1_ (
   assign io_result_sign = sign_final_p1;
   assign io_result_exp = exp_final_p1;
   assign io_result_mant = mant_final_p1;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       p1_vld <= 1'b0;
     end else begin
       if(1'b1)begin
@@ -6591,7 +6591,7 @@ module FpxxSqrt_1_ (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(p0_vld)begin
       op_zero_p1 <= op_zero_p0;
     end
@@ -6641,8 +6641,8 @@ module Normalize_1_ (
       output  io_result_z_sign,
       output [5:0] io_result_z_exp,
       output [12:0] io_result_z_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  u_dot_io_result_vld;
   wire  u_dot_io_result_sign;
   wire [5:0] u_dot_io_result_exp;
@@ -6756,8 +6756,8 @@ module Normalize_1_ (
     .io_result_sign(u_dot_io_result_sign),
     .io_result_exp(u_dot_io_result_exp),
     .io_result_mant(u_dot_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxRSqrt_1_ u_rsqrt ( 
     .p0_vld(vec_dot_vld),
@@ -6768,8 +6768,8 @@ module Normalize_1_ (
     .io_result_sign(u_rsqrt_io_result_sign),
     .io_result_exp(u_rsqrt_io_result_exp),
     .io_result_mant(u_rsqrt_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   MulVecScalar u_vec_adj ( 
     .io_op_vld(denom_vld),
@@ -6795,8 +6795,8 @@ module Normalize_1_ (
     .io_result_z_sign(u_vec_adj_io_result_z_sign),
     .io_result_z_exp(u_vec_adj_io_result_z_exp),
     .io_result_z_mant(u_vec_adj_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign vec_dot_vld = u_dot_io_result_vld;
   assign vec_dot_sign = u_dot_io_result_sign;
@@ -6816,7 +6816,7 @@ module Normalize_1_ (
   assign io_result_z_sign = u_vec_adj_io_result_z_sign;
   assign io_result_z_exp = u_vec_adj_io_result_z_exp;
   assign io_result_z_mant = u_vec_adj_io_result_z_mant;
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     io_op_delay_1_x_sign <= io_op_x_sign;
     io_op_delay_1_x_exp <= io_op_x_exp;
     io_op_delay_1_x_mant <= io_op_x_mant;
@@ -6947,8 +6947,8 @@ module MR1Top (
       output [10:0] io_txt_buf_wr_addr,
       output [7:0] io_txt_buf_wr_data,
       input   io_eof,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  _zz_23_;
   wire [31:0] _zz_24_;
   wire  _zz_25_;
@@ -9134,10 +9134,10 @@ module MR1Top (
   assign _zz_42_ = {{12{fpxx2int[19]}}, fpxx2int};
   assign _zz_43_ = (32'b00000000000010001000000000000000);
   initial begin
-    $readmemb("PanoCoreDut.v_toplevel_u_pano_core_u_mr1_top_ram_cpu_ram_symbol0.bin",ram_cpu_ram_symbol0);
-    $readmemb("PanoCoreDut.v_toplevel_u_pano_core_u_mr1_top_ram_cpu_ram_symbol1.bin",ram_cpu_ram_symbol1);
-    $readmemb("PanoCoreDut.v_toplevel_u_pano_core_u_mr1_top_ram_cpu_ram_symbol2.bin",ram_cpu_ram_symbol2);
-    $readmemb("PanoCoreDut.v_toplevel_u_pano_core_u_mr1_top_ram_cpu_ram_symbol3.bin",ram_cpu_ram_symbol3);
+    $readmemb("Pano.v_toplevel_core_u_pano_core_u_mr1_top_ram_cpu_ram_symbol0.bin",ram_cpu_ram_symbol0);
+    $readmemb("Pano.v_toplevel_core_u_pano_core_u_mr1_top_ram_cpu_ram_symbol1.bin",ram_cpu_ram_symbol1);
+    $readmemb("Pano.v_toplevel_core_u_pano_core_u_mr1_top_ram_cpu_ram_symbol2.bin",ram_cpu_ram_symbol2);
+    $readmemb("Pano.v_toplevel_core_u_pano_core_u_mr1_top_ram_cpu_ram_symbol3.bin",ram_cpu_ram_symbol3);
   end
   always @ (*) begin
     _zz_33_ = {_zz_47_, _zz_46_, _zz_45_, _zz_44_};
@@ -9145,7 +9145,7 @@ module MR1Top (
   always @ (*) begin
     _zz_32_ = {_zz_51_, _zz_50_, _zz_49_, _zz_48_};
   end
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(wmask[0] && _zz_5_ && mr1_1__data_req_wr ) begin
       ram_cpu_ram_symbol0[_zz_35_] <= _zz_7_[7 : 0];
     end
@@ -9166,7 +9166,7 @@ module MR1Top (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(mr1_1__instr_req_valid) begin
       _zz_48_ <= ram_cpu_ram_symbol0[_zz_34_];
       _zz_49_ <= ram_cpu_ram_symbol1[_zz_34_];
@@ -9189,8 +9189,8 @@ module MR1Top (
     .data_req_data(mr1_1__data_req_data),
     .data_rsp_valid(_zz_2_),
     .data_rsp_data(_zz_26_),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxAdd u_fpxx_add ( 
     .p0_vld(_zz_27_),
@@ -9204,8 +9204,8 @@ module MR1Top (
     .io_result_sign(u_fpxx_add_io_result_sign),
     .io_result_exp(u_fpxx_add_io_result_exp),
     .io_result_mant(u_fpxx_add_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxMul_57_ u_fpxx_mul ( 
     .p0_vld(_zz_28_),
@@ -9219,8 +9219,8 @@ module MR1Top (
     .io_result_sign(u_fpxx_mul_io_result_sign),
     .io_result_exp(u_fpxx_mul_io_result_exp),
     .io_result_mant(u_fpxx_mul_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   SInt2Fpxx u_int2fpxx ( 
     .p0_vld(_zz_29_),
@@ -9229,8 +9229,8 @@ module MR1Top (
     .io_result_sign(u_int2fpxx_io_result_sign),
     .io_result_exp(u_int2fpxx_io_result_exp),
     .io_result_mant(u_int2fpxx_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   Fpxx2SInt u_fpxx2int ( 
     .p0_vld(_zz_31_),
@@ -9240,8 +9240,8 @@ module MR1Top (
     .io_result_vld(u_fpxx2int_io_result_vld),
     .io_result(u_fpxx2int_io_result),
     .io_result_ovfl(u_fpxx2int_io_result_ovfl),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   always @ (*) begin
     case(mr1_1__data_req_size)
@@ -11396,8 +11396,8 @@ module MR1Top (
   assign io_txt_buf_wr = update_txt_buf;
   assign io_txt_buf_wr_addr = mr1_1__data_req_addr[12 : 2];
   assign io_txt_buf_wr_data = mr1_1__data_req_data[7 : 0];
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       mr1_1__instr_req_valid_regNext <= 1'b0;
       _zz_2_ <= 1'b0;
       _zz_8_ <= 1'b0;
@@ -11420,7 +11420,7 @@ module MR1Top (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     _zz_3_ <= mr1_1__data_req_addr[19];
     if(update_camera_pos_x)begin
       _zz_11_ <= mr1_1__data_req_data[19 : 0];
@@ -11487,8 +11487,8 @@ module VideoTimingGen (
       output reg [7:0] io_pixel_out_pixel_r,
       output reg [7:0] io_pixel_out_pixel_g,
       output reg [7:0] io_pixel_out_pixel_b,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire [11:0] _zz_1_;
   wire [7:0] _zz_2_;
   wire [5:0] _zz_3_;
@@ -11515,8 +11515,8 @@ module VideoTimingGen (
   assign h_blank = (_zz_2_ + io_timings_h_bp);
   assign v_blank = (_zz_3_ + io_timings_v_bp);
   assign pixel_active = ((_zz_4_ <= col_cntr) && (_zz_5_ <= line_cntr));
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       col_cntr <= (12'b000000000000);
       line_cntr <= (11'b00000000000);
     end else begin
@@ -11533,7 +11533,7 @@ module VideoTimingGen (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     io_pixel_out_vsync <= ((col_cntr == (12'b000000000000)) && (line_cntr == (11'b00000000000)));
     io_pixel_out_req <= pixel_active;
     io_pixel_out_eol <= (pixel_active ? last_col : 1'b0);
@@ -11578,8 +11578,8 @@ module CamSweep (
       output  io_ray_direction_z_sign,
       output [5:0] io_ray_direction_z_exp,
       output [12:0] io_ray_direction_z_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  u_pix_x_fp_io_result_vld;
   wire  u_pix_x_fp_io_result_sign;
   wire [5:0] u_pix_x_fp_io_result_exp;
@@ -11669,8 +11669,8 @@ module CamSweep (
     .io_result_sign(u_pix_x_fp_io_result_sign),
     .io_result_exp(u_pix_x_fp_io_result_exp),
     .io_result_mant(u_pix_x_fp_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   SInt2Fpxx_2_ u_pix_y_fp ( 
     .p0_vld(pix_vld),
@@ -11679,8 +11679,8 @@ module CamSweep (
     .io_result_sign(u_pix_y_fp_io_result_sign),
     .io_result_exp(u_pix_y_fp_io_result_exp),
     .io_result_mant(u_pix_y_fp_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxMul u_dir_x ( 
     .p0_vld(pix_fp_vld),
@@ -11694,8 +11694,8 @@ module CamSweep (
     .io_result_sign(u_dir_x_io_result_sign),
     .io_result_exp(u_dir_x_io_result_exp),
     .io_result_mant(u_dir_x_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxMul u_dir_y ( 
     .p0_vld(pix_fp_vld),
@@ -11709,8 +11709,8 @@ module CamSweep (
     .io_result_sign(u_dir_y_io_result_sign),
     .io_result_exp(u_dir_y_io_result_exp),
     .io_result_mant(u_dir_y_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign incrX_sign = 1'b0;
   assign incrX_exp = (6'b010101);
@@ -11761,7 +11761,7 @@ module CamSweep (
   assign io_pixel_out_pixel_r = pixel_in_delayed_pixel_r;
   assign io_pixel_out_pixel_g = pixel_in_delayed_pixel_g;
   assign io_pixel_out_pixel_b = pixel_in_delayed_pixel_b;
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if((io_pixel_in_vsync || (io_pixel_in_req && io_pixel_in_eof)))begin
       pix_x <= (12'b111011000000);
       pix_y <= (11'b00011110000);
@@ -11812,8 +11812,8 @@ module CamSweep (
     pixel_in_delayed_pixel_b <= io_pixel_in_delay_4_pixel_b;
   end
 
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       pix_vld <= 1'b0;
     end else begin
       pix_vld <= io_pixel_in_req;
@@ -11849,8 +11849,8 @@ module RotateX (
       output  io_result_z_sign,
       output [5:0] io_result_z_exp,
       output [12:0] io_result_z_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  u_cy_io_result_vld;
   wire  u_cy_io_result_sign;
   wire [5:0] u_cy_io_result_exp;
@@ -11917,8 +11917,8 @@ module RotateX (
     .io_result_sign(u_cy_io_result_sign),
     .io_result_exp(u_cy_io_result_exp),
     .io_result_mant(u_cy_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxMul u_sy ( 
     .p0_vld(io_op_vld),
@@ -11932,8 +11932,8 @@ module RotateX (
     .io_result_sign(u_sy_io_result_sign),
     .io_result_exp(u_sy_io_result_exp),
     .io_result_mant(u_sy_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxMul u_cz ( 
     .p0_vld(io_op_vld),
@@ -11947,8 +11947,8 @@ module RotateX (
     .io_result_sign(u_cz_io_result_sign),
     .io_result_exp(u_cz_io_result_exp),
     .io_result_mant(u_cz_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxMul u_sz ( 
     .p0_vld(io_op_vld),
@@ -11962,8 +11962,8 @@ module RotateX (
     .io_result_sign(u_sz_io_result_sign),
     .io_result_exp(u_sz_io_result_exp),
     .io_result_mant(u_sz_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxSub u_cy_sz ( 
     .io_op_vld(cy_vld),
@@ -11977,8 +11977,8 @@ module RotateX (
     .io_result_sign(u_cy_sz_io_result_sign),
     .io_result_exp(u_cy_sz_io_result_exp),
     .io_result_mant(u_cy_sz_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxAdd u_sy_cz ( 
     .p0_vld(sy_vld),
@@ -11992,8 +11992,8 @@ module RotateX (
     .io_result_sign(u_sy_cz_io_result_sign),
     .io_result_exp(u_sy_cz_io_result_exp),
     .io_result_mant(u_sy_cz_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign cy_vld = u_cy_io_result_vld;
   assign cy_sign = u_cy_io_result_sign;
@@ -12029,7 +12029,7 @@ module RotateX (
   assign io_result_z_sign = sy_cz_sign;
   assign io_result_z_exp = sy_cz_exp;
   assign io_result_z_mant = sy_cz_mant;
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     io_op_x_delay_1_sign <= io_op_x_sign;
     io_op_x_delay_1_exp <= io_op_x_exp;
     io_op_x_delay_1_mant <= io_op_x_mant;
@@ -12067,8 +12067,8 @@ module RotateY (
       output  io_result_z_sign,
       output [5:0] io_result_z_exp,
       output [12:0] io_result_z_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  u_cx_io_result_vld;
   wire  u_cx_io_result_sign;
   wire [5:0] u_cx_io_result_exp;
@@ -12135,8 +12135,8 @@ module RotateY (
     .io_result_sign(u_cx_io_result_sign),
     .io_result_exp(u_cx_io_result_exp),
     .io_result_mant(u_cx_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxMul u_sx ( 
     .p0_vld(io_op_vld),
@@ -12150,8 +12150,8 @@ module RotateY (
     .io_result_sign(u_sx_io_result_sign),
     .io_result_exp(u_sx_io_result_exp),
     .io_result_mant(u_sx_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxMul u_cz ( 
     .p0_vld(io_op_vld),
@@ -12165,8 +12165,8 @@ module RotateY (
     .io_result_sign(u_cz_io_result_sign),
     .io_result_exp(u_cz_io_result_exp),
     .io_result_mant(u_cz_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxMul u_sz ( 
     .p0_vld(io_op_vld),
@@ -12180,8 +12180,8 @@ module RotateY (
     .io_result_sign(u_sz_io_result_sign),
     .io_result_exp(u_sz_io_result_exp),
     .io_result_mant(u_sz_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxAdd u_cx_sz ( 
     .p0_vld(cx_vld),
@@ -12195,8 +12195,8 @@ module RotateY (
     .io_result_sign(u_cx_sz_io_result_sign),
     .io_result_exp(u_cx_sz_io_result_exp),
     .io_result_mant(u_cx_sz_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxSub u_cz_sx ( 
     .io_op_vld(cz_vld),
@@ -12210,8 +12210,8 @@ module RotateY (
     .io_result_sign(u_cz_sx_io_result_sign),
     .io_result_exp(u_cz_sx_io_result_exp),
     .io_result_mant(u_cz_sx_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign cx_vld = u_cx_io_result_vld;
   assign cx_sign = u_cx_io_result_sign;
@@ -12247,7 +12247,7 @@ module RotateY (
   assign io_result_z_sign = cz_sx_sign;
   assign io_result_z_exp = cz_sx_exp;
   assign io_result_z_mant = cz_sx_mant;
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     io_op_y_delay_1_sign <= io_op_y_sign;
     io_op_y_delay_1_exp <= io_op_y_exp;
     io_op_y_delay_1_mant <= io_op_y_mant;
@@ -12279,8 +12279,8 @@ module Normalize_2_ (
       output  io_result_z_sign,
       output [5:0] io_result_z_exp,
       output [12:0] io_result_z_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  u_dot_io_result_vld;
   wire  u_dot_io_result_sign;
   wire [5:0] u_dot_io_result_exp;
@@ -12394,8 +12394,8 @@ module Normalize_2_ (
     .io_result_sign(u_dot_io_result_sign),
     .io_result_exp(u_dot_io_result_exp),
     .io_result_mant(u_dot_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxRSqrt_2_ u_rsqrt ( 
     .p0_vld(vec_dot_vld),
@@ -12406,8 +12406,8 @@ module Normalize_2_ (
     .io_result_sign(u_rsqrt_io_result_sign),
     .io_result_exp(u_rsqrt_io_result_exp),
     .io_result_mant(u_rsqrt_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   MulVecScalar u_vec_adj ( 
     .io_op_vld(denom_vld),
@@ -12433,8 +12433,8 @@ module Normalize_2_ (
     .io_result_z_sign(u_vec_adj_io_result_z_sign),
     .io_result_z_exp(u_vec_adj_io_result_z_exp),
     .io_result_z_mant(u_vec_adj_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign vec_dot_vld = u_dot_io_result_vld;
   assign vec_dot_sign = u_dot_io_result_sign;
@@ -12454,7 +12454,7 @@ module Normalize_2_ (
   assign io_result_z_sign = u_vec_adj_io_result_z_sign;
   assign io_result_z_exp = u_vec_adj_io_result_z_exp;
   assign io_result_z_mant = u_vec_adj_io_result_z_mant;
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     io_op_delay_1_x_sign <= io_op_x_sign;
     io_op_delay_1_x_exp <= io_op_x_exp;
     io_op_delay_1_x_mant <= io_op_x_mant;
@@ -12625,8 +12625,8 @@ module SphereIntersect (
       output  io_result_ray_direction_z_sign,
       output [5:0] io_result_ray_direction_z_exp,
       output [12:0] io_result_ray_direction_z_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  u_c0r0_io_result_vld;
   wire  u_c0r0_io_result_x_sign;
   wire [5:0] u_c0r0_io_result_x_exp;
@@ -14378,8 +14378,8 @@ module SphereIntersect (
     .io_result_z_sign(u_c0r0_io_result_z_sign),
     .io_result_z_exp(u_c0r0_io_result_z_exp),
     .io_result_z_mant(u_c0r0_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   DotProduct u_dot_tca ( 
     .io_op_vld(c0r0_vld),
@@ -14405,8 +14405,8 @@ module SphereIntersect (
     .io_result_sign(u_dot_tca_io_result_sign),
     .io_result_exp(u_dot_tca_io_result_exp),
     .io_result_mant(u_dot_tca_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   DotProduct u_dot_c0r0_c0r0 ( 
     .io_op_vld(c0r0_vld),
@@ -14432,8 +14432,8 @@ module SphereIntersect (
     .io_result_sign(u_dot_c0r0_c0r0_io_result_sign),
     .io_result_exp(u_dot_c0r0_c0r0_io_result_exp),
     .io_result_mant(u_dot_c0r0_c0r0_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxMul u_tca_tca ( 
     .p0_vld(tca_vld),
@@ -14447,8 +14447,8 @@ module SphereIntersect (
     .io_result_sign(u_tca_tca_io_result_sign),
     .io_result_exp(u_tca_tca_io_result_exp),
     .io_result_mant(u_tca_tca_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxSub u_d2 ( 
     .io_op_vld(tca_tca_vld),
@@ -14462,8 +14462,8 @@ module SphereIntersect (
     .io_result_sign(u_d2_io_result_sign),
     .io_result_exp(u_d2_io_result_exp),
     .io_result_mant(u_d2_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxSub u_radius2_m_d2 ( 
     .io_op_vld(d2_vld),
@@ -14477,8 +14477,8 @@ module SphereIntersect (
     .io_result_sign(u_radius2_m_d2_io_result_sign),
     .io_result_exp(u_radius2_m_d2_io_result_exp),
     .io_result_mant(u_radius2_m_d2_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxSqrt u_thc ( 
     .p0_vld(radius2_m_d2_vld),
@@ -14489,8 +14489,8 @@ module SphereIntersect (
     .io_result_sign(u_thc_io_result_sign),
     .io_result_exp(u_thc_io_result_exp),
     .io_result_mant(u_thc_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxSub u_t0 ( 
     .io_op_vld(thc_vld),
@@ -14504,8 +14504,8 @@ module SphereIntersect (
     .io_result_sign(u_t0_io_result_sign),
     .io_result_exp(u_t0_io_result_exp),
     .io_result_mant(u_t0_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxAdd u_t1 ( 
     .p0_vld(thc_vld),
@@ -14519,8 +14519,8 @@ module SphereIntersect (
     .io_result_sign(u_t1_io_result_sign),
     .io_result_exp(u_t1_io_result_exp),
     .io_result_mant(u_t1_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   Intersection u_intersection ( 
     .io_op_vld(t_vld),
@@ -14555,8 +14555,8 @@ module SphereIntersect (
     .io_result_z_sign(u_intersection_io_result_z_sign),
     .io_result_z_exp(u_intersection_io_result_z_exp),
     .io_result_z_mant(u_intersection_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   SubVecVec u_normal_raw ( 
     .io_op_vld(intersection_vld),
@@ -14588,8 +14588,8 @@ module SphereIntersect (
     .io_result_z_sign(u_normal_raw_io_result_z_sign),
     .io_result_z_exp(u_normal_raw_io_result_z_exp),
     .io_result_z_mant(u_normal_raw_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   Normalize u_normalize ( 
     .io_op_vld(normal_raw_vld),
@@ -14612,8 +14612,8 @@ module SphereIntersect (
     .io_result_z_sign(u_normalize_io_result_z_sign),
     .io_result_z_exp(u_normalize_io_result_z_exp),
     .io_result_z_mant(u_normalize_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   DotProduct u_dir_dot_normal ( 
     .io_op_vld(normal_vld),
@@ -14639,8 +14639,8 @@ module SphereIntersect (
     .io_result_sign(u_dir_dot_normal_io_result_sign),
     .io_result_exp(u_dir_dot_normal_io_result_exp),
     .io_result_mant(u_dir_dot_normal_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   MulVecScalar u_dir_mirror ( 
     .io_op_vld(dir_dot_normal_x2_vld),
@@ -14666,8 +14666,8 @@ module SphereIntersect (
     .io_result_z_sign(u_dir_mirror_io_result_z_sign),
     .io_result_z_exp(u_dir_mirror_io_result_z_exp),
     .io_result_z_mant(u_dir_mirror_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   SubVecVec u_reflect_dir ( 
     .io_op_vld(dir_mirror_vld),
@@ -14699,8 +14699,8 @@ module SphereIntersect (
     .io_result_z_sign(u_reflect_dir_io_result_z_sign),
     .io_result_z_exp(u_reflect_dir_io_result_z_exp),
     .io_result_z_mant(u_reflect_dir_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign c0r0_vld = u_c0r0_io_result_vld;
   assign c0r0_x_sign = u_c0r0_io_result_x_sign;
@@ -14918,7 +14918,7 @@ module SphereIntersect (
   assign io_result_ray_direction_z_sign = ray_delayed_direction_z_sign;
   assign io_result_ray_direction_z_exp = ray_delayed_direction_z_exp;
   assign io_result_ray_direction_z_mant = ray_delayed_direction_z_mant;
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     io_ray_direction_delay_1_x_sign <= io_ray_direction_x_sign;
     io_ray_direction_delay_1_x_exp <= io_ray_direction_x_exp;
     io_ray_direction_delay_1_x_mant <= io_ray_direction_x_mant;
@@ -16447,8 +16447,8 @@ module PlaneIntersect (
       output  io_result_intersection_z_sign,
       output [5:0] io_result_intersection_z_exp,
       output [12:0] io_result_intersection_z_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  u_dot_norm_dir_io_result_vld;
   wire  u_dot_norm_dir_io_result_sign;
   wire [5:0] u_dot_norm_dir_io_result_exp;
@@ -16851,8 +16851,8 @@ module PlaneIntersect (
     .io_result_sign(u_dot_norm_dir_io_result_sign),
     .io_result_exp(u_dot_norm_dir_io_result_exp),
     .io_result_mant(u_dot_norm_dir_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   SubVecVec u_p0r0 ( 
     .io_op_vld(io_op_vld),
@@ -16884,8 +16884,8 @@ module PlaneIntersect (
     .io_result_z_sign(u_p0r0_io_result_z_sign),
     .io_result_z_exp(u_p0r0_io_result_z_exp),
     .io_result_z_mant(u_p0r0_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   DotProduct u_dot_p0r0_norm ( 
     .io_op_vld(p0r0_vld),
@@ -16911,8 +16911,8 @@ module PlaneIntersect (
     .io_result_sign(u_dot_p0r0_norm_io_result_sign),
     .io_result_exp(u_dot_p0r0_norm_io_result_exp),
     .io_result_mant(u_dot_p0r0_norm_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxDiv u_div_p0r0_dot_norm_denom ( 
     .p0_vld(denom_delayed_vld),
@@ -16926,8 +16926,8 @@ module PlaneIntersect (
     .io_result_sign(u_div_p0r0_dot_norm_denom_io_result_sign),
     .io_result_exp(u_div_p0r0_dot_norm_denom_io_result_exp),
     .io_result_mant(u_div_p0r0_dot_norm_denom_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   Intersection u_intersection ( 
     .io_op_vld(t_vld),
@@ -16962,8 +16962,8 @@ module PlaneIntersect (
     .io_result_z_sign(u_intersection_io_result_z_sign),
     .io_result_z_exp(u_intersection_io_result_z_exp),
     .io_result_z_mant(u_intersection_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign denom_vld = u_dot_norm_dir_io_result_vld;
   assign denom_sign = u_dot_norm_dir_io_result_sign;
@@ -17020,7 +17020,7 @@ module PlaneIntersect (
   assign io_result_intersection_z_sign = intersection_z_sign;
   assign io_result_intersection_z_exp = intersection_z_exp;
   assign io_result_intersection_z_mant = intersection_z_mant;
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     intersects_par_vld <= denom_vld;
     denom_exp_regNext <= denom_exp;
     io_plane_normal_delay_1_x_sign <= io_plane_normal_x_sign;
@@ -17439,8 +17439,8 @@ module SphereIntersect_1_ (
       output  io_result_ray_direction_z_sign,
       output [5:0] io_result_ray_direction_z_exp,
       output [12:0] io_result_ray_direction_z_mant,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  u_c0r0_io_result_vld;
   wire  u_c0r0_io_result_x_sign;
   wire [5:0] u_c0r0_io_result_x_exp;
@@ -19192,8 +19192,8 @@ module SphereIntersect_1_ (
     .io_result_z_sign(u_c0r0_io_result_z_sign),
     .io_result_z_exp(u_c0r0_io_result_z_exp),
     .io_result_z_mant(u_c0r0_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   DotProduct u_dot_tca ( 
     .io_op_vld(c0r0_vld),
@@ -19219,8 +19219,8 @@ module SphereIntersect_1_ (
     .io_result_sign(u_dot_tca_io_result_sign),
     .io_result_exp(u_dot_tca_io_result_exp),
     .io_result_mant(u_dot_tca_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   DotProduct u_dot_c0r0_c0r0 ( 
     .io_op_vld(c0r0_vld),
@@ -19246,8 +19246,8 @@ module SphereIntersect_1_ (
     .io_result_sign(u_dot_c0r0_c0r0_io_result_sign),
     .io_result_exp(u_dot_c0r0_c0r0_io_result_exp),
     .io_result_mant(u_dot_c0r0_c0r0_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxMul u_tca_tca ( 
     .p0_vld(tca_vld),
@@ -19261,8 +19261,8 @@ module SphereIntersect_1_ (
     .io_result_sign(u_tca_tca_io_result_sign),
     .io_result_exp(u_tca_tca_io_result_exp),
     .io_result_mant(u_tca_tca_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxSub u_d2 ( 
     .io_op_vld(tca_tca_vld),
@@ -19276,8 +19276,8 @@ module SphereIntersect_1_ (
     .io_result_sign(u_d2_io_result_sign),
     .io_result_exp(u_d2_io_result_exp),
     .io_result_mant(u_d2_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxSub u_radius2_m_d2 ( 
     .io_op_vld(d2_vld),
@@ -19291,8 +19291,8 @@ module SphereIntersect_1_ (
     .io_result_sign(u_radius2_m_d2_io_result_sign),
     .io_result_exp(u_radius2_m_d2_io_result_exp),
     .io_result_mant(u_radius2_m_d2_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxSqrt_1_ u_thc ( 
     .p0_vld(radius2_m_d2_vld),
@@ -19303,8 +19303,8 @@ module SphereIntersect_1_ (
     .io_result_sign(u_thc_io_result_sign),
     .io_result_exp(u_thc_io_result_exp),
     .io_result_mant(u_thc_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxSub u_t0 ( 
     .io_op_vld(thc_vld),
@@ -19318,8 +19318,8 @@ module SphereIntersect_1_ (
     .io_result_sign(u_t0_io_result_sign),
     .io_result_exp(u_t0_io_result_exp),
     .io_result_mant(u_t0_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   FpxxAdd u_t1 ( 
     .p0_vld(thc_vld),
@@ -19333,8 +19333,8 @@ module SphereIntersect_1_ (
     .io_result_sign(u_t1_io_result_sign),
     .io_result_exp(u_t1_io_result_exp),
     .io_result_mant(u_t1_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   Intersection u_intersection ( 
     .io_op_vld(t_vld),
@@ -19369,8 +19369,8 @@ module SphereIntersect_1_ (
     .io_result_z_sign(u_intersection_io_result_z_sign),
     .io_result_z_exp(u_intersection_io_result_z_exp),
     .io_result_z_mant(u_intersection_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   SubVecVec u_normal_raw ( 
     .io_op_vld(intersection_vld),
@@ -19402,8 +19402,8 @@ module SphereIntersect_1_ (
     .io_result_z_sign(u_normal_raw_io_result_z_sign),
     .io_result_z_exp(u_normal_raw_io_result_z_exp),
     .io_result_z_mant(u_normal_raw_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   Normalize_1_ u_normalize ( 
     .io_op_vld(normal_raw_vld),
@@ -19426,8 +19426,8 @@ module SphereIntersect_1_ (
     .io_result_z_sign(u_normalize_io_result_z_sign),
     .io_result_z_exp(u_normalize_io_result_z_exp),
     .io_result_z_mant(u_normalize_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   DotProduct u_dir_dot_normal ( 
     .io_op_vld(normal_vld),
@@ -19453,8 +19453,8 @@ module SphereIntersect_1_ (
     .io_result_sign(u_dir_dot_normal_io_result_sign),
     .io_result_exp(u_dir_dot_normal_io_result_exp),
     .io_result_mant(u_dir_dot_normal_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   MulVecScalar u_dir_mirror ( 
     .io_op_vld(dir_dot_normal_x2_vld),
@@ -19480,8 +19480,8 @@ module SphereIntersect_1_ (
     .io_result_z_sign(u_dir_mirror_io_result_z_sign),
     .io_result_z_exp(u_dir_mirror_io_result_z_exp),
     .io_result_z_mant(u_dir_mirror_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   SubVecVec u_reflect_dir ( 
     .io_op_vld(dir_mirror_vld),
@@ -19513,8 +19513,8 @@ module SphereIntersect_1_ (
     .io_result_z_sign(u_reflect_dir_io_result_z_sign),
     .io_result_z_exp(u_reflect_dir_io_result_z_exp),
     .io_result_z_mant(u_reflect_dir_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign c0r0_vld = u_c0r0_io_result_vld;
   assign c0r0_x_sign = u_c0r0_io_result_x_sign;
@@ -19732,7 +19732,7 @@ module SphereIntersect_1_ (
   assign io_result_ray_direction_z_sign = ray_delayed_direction_z_sign;
   assign io_result_ray_direction_z_exp = ray_delayed_direction_z_exp;
   assign io_result_ray_direction_z_mant = ray_delayed_direction_z_mant;
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     io_ray_direction_delay_1_x_sign <= io_ray_direction_x_sign;
     io_ray_direction_delay_1_x_exp <= io_ray_direction_x_exp;
     io_ray_direction_delay_1_x_mant <= io_ray_direction_x_mant;
@@ -21233,8 +21233,8 @@ module TxtGen (
       input   io_txt_buf_wr,
       input  [10:0] io_txt_buf_wr_addr,
       input  [7:0] io_txt_buf_wr_data,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   reg [7:0] _zz_1_;
   reg [7:0] _zz_2_;
   reg [7:0] _zz_3_;
@@ -25387,7 +25387,7 @@ module TxtGen (
   assign _zz_10_ = (cur_char >>> 4);
   assign _zz_11_ = (bitmap_byte >>> ((3'b111) ^ char_sub_x_p2[2 : 0]));
   assign _zz_12_ = io_txt_buf_wr_data;
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(io_txt_buf_wr && io_txt_buf_wr ) begin
       u_txt_buf[io_txt_buf_wr_addr] <= _zz_12_;
     end
@@ -25396,16 +25396,16 @@ module TxtGen (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(txt_buf_rd_p0) begin
       _zz_1_ <= u_txt_buf[txt_buf_addr];
     end
   end
 
   initial begin
-    $readmemb("PanoCoreDut.v_toplevel_u_pano_core_u_txt_gen_u_font_bitmap_ram.bin",u_font_bitmap_ram);
+    $readmemb("Pano.v_toplevel_core_u_pano_core_u_txt_gen_u_font_bitmap_ram.bin",u_font_bitmap_ram);
   end
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     if(txt_buf_rd_p1) begin
       _zz_3_ <= u_font_bitmap_ram[bitmap_addr];
     end
@@ -29530,8 +29530,8 @@ module TxtGen (
     end
   end
 
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       pix_x <= (12'b000000000000);
       pix_y <= (11'b00000000000);
       char_x <= (8'b00000000);
@@ -29576,7 +29576,7 @@ module TxtGen (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     txt_buf_rd_p1 <= txt_buf_rd_p0;
     char_sub_x_p1 <= char_sub_x;
     txt_buf_rd_p2 <= txt_buf_rd_p1;
@@ -29625,8 +29625,8 @@ module VideoOut (
       output reg [7:0] io_vga_out_r,
       output reg [7:0] io_vga_out_g,
       output reg [7:0] io_vga_out_b,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire [7:0] _zz_1_;
   wire [5:0] _zz_2_;
   wire [10:0] _zz_3_;
@@ -29655,8 +29655,8 @@ module VideoOut (
   assign h_blank = (_zz_1_ + io_timings_h_bp);
   assign v_blank = (_zz_2_ + io_timings_v_bp);
   assign blank = ((v_cntr < _zz_3_) || (h_cntr < _zz_4_));
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       io_vga_out_vsync <= 1'b0;
       io_vga_out_hsync <= 1'b0;
       io_vga_out_blank_ <= 1'b0;
@@ -29697,8 +29697,8 @@ module PanoCore (
       output [7:0] io_vo_b,
       output  io_led_green,
       output  io_led_blue,
-      input   clk,
-      input   reset);
+      input   toplevel_resetCtrl_clk25,
+      input   toplevel_resetCtrl_reset_);
   wire  _zz_11_;
   wire  u_mr1_top_io_led1;
   wire  u_mr1_top_io_led2;
@@ -31101,8 +31101,8 @@ module PanoCore (
     .io_txt_buf_wr_addr(u_mr1_top_io_txt_buf_wr_addr),
     .io_txt_buf_wr_data(u_mr1_top_io_txt_buf_wr_data),
     .io_eof(eof_final),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   VideoTimingGen vi_gen ( 
     .io_timings_h_active(timings_h_active),
@@ -31124,8 +31124,8 @@ module PanoCore (
     .io_pixel_out_pixel_r(vi_gen_io_pixel_out_pixel_r),
     .io_pixel_out_pixel_g(vi_gen_io_pixel_out_pixel_g),
     .io_pixel_out_pixel_b(vi_gen_io_pixel_out_pixel_b),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   CamSweep rt_u_cam_sweep ( 
     .io_pixel_in_vsync(vi_gen_pixel_out_vsync),
@@ -31160,8 +31160,8 @@ module PanoCore (
     .io_ray_direction_z_sign(rt_u_cam_sweep_io_ray_direction_z_sign),
     .io_ray_direction_z_exp(rt_u_cam_sweep_io_ray_direction_z_exp),
     .io_ray_direction_z_mant(rt_u_cam_sweep_io_ray_direction_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   RotateX rt_u_ray_dir_rot_x ( 
     .io_op_vld(rt_cam_sweep_pixel_req),
@@ -31190,8 +31190,8 @@ module PanoCore (
     .io_result_z_sign(rt_u_ray_dir_rot_x_io_result_z_sign),
     .io_result_z_exp(rt_u_ray_dir_rot_x_io_result_z_exp),
     .io_result_z_mant(rt_u_ray_dir_rot_x_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   RotateY rt_u_ray_dir_rot_y ( 
     .io_op_vld(rt_ray_dir_rot_x_vld),
@@ -31220,8 +31220,8 @@ module PanoCore (
     .io_result_z_sign(rt_u_ray_dir_rot_y_io_result_z_sign),
     .io_result_z_exp(rt_u_ray_dir_rot_y_io_result_z_exp),
     .io_result_z_mant(rt_u_ray_dir_rot_y_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   Normalize_2_ rt_u_normalize_ray ( 
     .io_op_vld(rt_ray_dir_rot_y_vld),
@@ -31244,8 +31244,8 @@ module PanoCore (
     .io_result_z_sign(rt_u_normalize_ray_io_result_z_sign),
     .io_result_z_exp(rt_u_normalize_ray_io_result_z_exp),
     .io_result_z_mant(rt_u_normalize_ray_io_result_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   SphereIntersect rt_u_sphere_intersect ( 
     .io_op_vld(rt_ray_normalized_vld),
@@ -31350,8 +31350,8 @@ module PanoCore (
     .io_result_ray_direction_z_sign(rt_u_sphere_intersect_io_result_ray_direction_z_sign),
     .io_result_ray_direction_z_exp(rt_u_sphere_intersect_io_result_ray_direction_z_exp),
     .io_result_ray_direction_z_mant(rt_u_sphere_intersect_io_result_ray_direction_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   PlaneIntersect rt_u_plane_intersect ( 
     .io_op_vld(rt_sphere_result_vld),
@@ -31405,8 +31405,8 @@ module PanoCore (
     .io_result_intersection_z_sign(rt_u_plane_intersect_io_result_intersection_z_sign),
     .io_result_intersection_z_exp(rt_u_plane_intersect_io_result_intersection_z_exp),
     .io_result_intersection_z_mant(rt_u_plane_intersect_io_result_intersection_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   Fpxx2SInt rt_u_plane_x_int ( 
     .p0_vld(rt_plane_intersect_vld),
@@ -31416,8 +31416,8 @@ module PanoCore (
     .io_result_vld(rt_u_plane_x_int_io_result_vld),
     .io_result(rt_u_plane_x_int_io_result),
     .io_result_ovfl(rt_u_plane_x_int_io_result_ovfl),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   Fpxx2SInt rt_u_plane_z_int ( 
     .p0_vld(rt_plane_intersect_vld),
@@ -31427,8 +31427,8 @@ module PanoCore (
     .io_result_vld(rt_u_plane_z_int_io_result_vld),
     .io_result(rt_u_plane_z_int_io_result),
     .io_result_ovfl(rt_u_plane_z_int_io_result_ovfl),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   SphereIntersect_1_ rt_u_shadow_sphere_intersect ( 
     .io_op_vld(rt_plane_intersect_vld),
@@ -31533,8 +31533,8 @@ module PanoCore (
     .io_result_ray_direction_z_sign(rt_u_shadow_sphere_intersect_io_result_ray_direction_z_sign),
     .io_result_ray_direction_z_exp(rt_u_shadow_sphere_intersect_io_result_ray_direction_z_exp),
     .io_result_ray_direction_z_mant(rt_u_shadow_sphere_intersect_io_result_ray_direction_z_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   DotProduct rt_u_dot_spot_light ( 
     .io_op_vld(rt_sphere_result_vld),
@@ -31560,8 +31560,8 @@ module PanoCore (
     .io_result_sign(rt_u_dot_spot_light_io_result_sign),
     .io_result_exp(rt_u_dot_spot_light_io_result_exp),
     .io_result_mant(rt_u_dot_spot_light_io_result_mant),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   Fpxx2SInt rt_u_spot_light_int ( 
     .p0_vld(rt_spot_light_vld),
@@ -31571,8 +31571,8 @@ module PanoCore (
     .io_result_vld(rt_u_spot_light_int_io_result_vld),
     .io_result(rt_u_spot_light_int_io_result),
     .io_result_ovfl(rt_u_spot_light_int_io_result_ovfl),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   TxtGen u_txt_gen ( 
     .io_pixel_in_vsync(rt_rt_pixel_vsync),
@@ -31592,8 +31592,8 @@ module PanoCore (
     .io_txt_buf_wr(u_mr1_top_io_txt_buf_wr),
     .io_txt_buf_wr_addr(u_mr1_top_io_txt_buf_wr_addr),
     .io_txt_buf_wr_data(u_mr1_top_io_txt_buf_wr_data),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   VideoOut vo ( 
     .io_timings_h_active(timings_h_active),
@@ -31621,8 +31621,8 @@ module PanoCore (
     .io_vga_out_r(vo_io_vga_out_r),
     .io_vga_out_g(vo_io_vga_out_g),
     .io_vga_out_b(vo_io_vga_out_b),
-    .clk(clk),
-    .reset(reset) 
+    .toplevel_resetCtrl_clk25(toplevel_resetCtrl_clk25),
+    .toplevel_resetCtrl_reset_(toplevel_resetCtrl_reset_) 
   );
   assign _zz_1_[23 : 0] = (24'b111111111111111111111111);
   assign io_led_green = leds_led_cntr[23];
@@ -32011,8 +32011,8 @@ module PanoCore (
   assign io_vo_r = vo_io_vga_out_r;
   assign io_vo_g = vo_io_vga_out_g;
   assign io_vo_b = vo_io_vga_out_b;
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
+    if(!toplevel_resetCtrl_reset_) begin
       leds_led_cntr <= (24'b000000000000000000000000);
     end else begin
       if((leds_led_cntr == _zz_1_))begin
@@ -32023,7 +32023,7 @@ module PanoCore (
     end
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge toplevel_resetCtrl_clk25) begin
     rt_plane_intersection_x_sign_delayed <= rt_plane_intersection_x_sign;
     rt_plane_intersection_z_sign_delayed <= rt_plane_intersection_z_sign;
     rt_plane_intersects_delayed <= rt_plane_intersects;
@@ -32729,4 +32729,5 @@ module PanoCore (
   end
 
 endmodule
+
 

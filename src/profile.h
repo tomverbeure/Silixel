@@ -15,5 +15,11 @@ void profileInputDifferences(
     const vector<int>&      step_ends,
     int level
     );
+void profileDumpLouvainGraph(
+    const vector<t_lut>&    luts
+    );
+void profileDumpLeidenGraph(
+    const vector<t_lut>&    luts
+    );
 
 #endif
