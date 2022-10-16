@@ -435,9 +435,22 @@ int main(int argc, char **argv)
     profileInputDifferences(g_luts, g_step_starts, g_step_ends, 9);
 #endif
 
-//    profileDumpLouvainGraph(g_luts);
-    profileDumpLeidenGraph(g_luts);
+#if 0
+    profileDumpLouvainGraph(g_luts, 255);
     exit(0);
+#endif
+
+#if 0
+    optimizeRandomOrder(g_luts, outbits, g_ones);
+#endif
+
+#if 1
+    unordered_map<int,int> id2group;
+    //int num_groups = optimizeReadGroupFile("louvain.blaze_255.l3.group", id2group);
+    int num_groups = optimizeReadGroupFile("louvain.blaze_2x_255.l3.group", id2group);
+    //int num_groups = optimizeReadGroupFile("louvain.vga_demo.l2.group", id2group);
+    optimizeSortByGroup(g_luts, outbits, g_ones, id2group);
+#endif
 
 #if 0
     optimizeCache(g_luts, outbits, g_ones);

@@ -107,6 +107,8 @@ ADD_EXECUTABLE(silixel_cuda
         profile.h
         optimize.cc
         optimize.h
+        utility.cc
+        utility.h
 	)
 
 TARGET_COMPILE_FEATURES(silixel_cuda PUBLIC cxx_std_11)

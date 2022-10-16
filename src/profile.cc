@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstdlib>
 
+#include "utility.h"
 
 
 #include "profile.h"
@@ -309,15 +310,31 @@ void profileInputDifferences(
 
 
 void profileDumpLouvainGraph(
-    const vector<t_lut>&    luts
+    const vector<t_lut>&    luts,
+    int                     max_fanout 
     )
 {
+    unordered_map<int, int> high_fanout_luts;
+    if (max_fanout != -1){
+        getHighFanoutLuts(luts, high_fanout_luts, max_fanout+1);
+    }
+
+
     for(int lid=0; lid<luts.size(); ++lid){
+        if (high_fanout_luts.find(lid) != high_fanout_luts.end()){
+            fprintf(stderr, "Ignore high fanout LUT %d (fanout = %d)\n", lid, high_fanout_luts[lid]);
+            continue;
+        }
+
         for(int i=0; i<4; ++i){
             int input_id = luts[lid].inputs[i];
             if (input_id == -1)
                 continue;
             input_id >>= 1;
+
+            if (high_fanout_luts.find(input_id) != high_fanout_luts.end()){
+                continue;
+            }
 
             printf("%d %d\n", input_id, lid);
         }

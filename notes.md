@@ -9,11 +9,15 @@
 * Run Louvain and output the full graph (by using `-l -1`). This can take a long time a netlist with
   a signals that have a huge fanout.
 
-    ../louvain-generic/louvain louvain_input.vga_demo.bin -l -1 > graph.tree
+    ../louvain-generic/louvain louvain_input.vga_demo.bin -v -l -1 > graph.tree
 
 * Run hierarchy to see how each original node is grouped into the same community for a given level:
 
     ../louvain-generic/hierarchy graph.tree -l 2
+
+* Choose one of these hierarchies and create node to community file:
+
+    ../louvain-generic/hierarchy graph.tree -l 3 > louvain.vga_demo.l3.group
 
 # Louvain notes
 
@@ -22,7 +26,18 @@
 
 * execution time: 
     * blaze netlist without high fanout nets removed:     1569s
-    * blaze netlist with high fanout nets removed (>500): 
+    * blaze netlist with high fanout nets removed (>500): 406s
+    * blaze netlist with high fanout nets removed (>255): 45s
+
+# Blaze with double memory:
+
+* Louvain >255 fanout removed: 75s
+
+* Standard: 309us
+* Random:   350us
+* Louvain, prune 256, l2: 312us
+* Louvain, prune 256, l3: 311us
+* Louvain, prune 256, l4: 310us
 
 # SM notes
 

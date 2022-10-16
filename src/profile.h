@@ -16,7 +16,8 @@ void profileInputDifferences(
     int level
     );
 void profileDumpLouvainGraph(
-    const vector<t_lut>&    luts
+    const vector<t_lut>&    luts,
+    int                     max_fanout 
     );
 void profileDumpLeidenGraph(
     const vector<t_lut>&    luts

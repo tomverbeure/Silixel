@@ -486,10 +486,6 @@ void simulBegin_cuda(
 
     // init cells
     n = ones.size();
-
-    //blockSize = G;
-    //numBlocks = (n+blockSize-1)/blockSize;
-
     blockSize = g_blockSize;
     numBlocks = min(g_numBlocks, (n+blockSize-1)/blockSize);
 
@@ -499,7 +495,7 @@ void simulBegin_cuda(
     for(int c=0;c<2;++c){
         n = step_ends[0]-step_starts[0]+1;
         blockSize = g_blockSize;
-        numBlocks = (n+blockSize-1)/blockSize;
+        numBlocks = min(g_numBlocks, (n+blockSize-1)/blockSize);
 
         simSimul_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Cfg, g_cuLUTs_Addrs, g_cuLUTs_Outputs, 0, n);
 
@@ -514,7 +510,7 @@ void simulBegin_cuda(
     // Why a second time? Some of these registers may have been cleared after const resolve
     n = ones.size();
     blockSize = g_blockSize;
-    numBlocks = (n+blockSize-1)/blockSize;
+    numBlocks = min(g_numBlocks, (n+blockSize-1)/blockSize);
 
     simInit_cuda<<<numBlocks,blockSize>>>(g_cuOutInits, g_cuLUTs_Outputs, n);
 }
@@ -542,6 +538,7 @@ void simulCycle_cuda(
         blockSize = g_blockSize;
         numBlocks = min(g_numBlocks, (n+blockSize-1)/blockSize);
 
+        checkCudaErrors(cudaFuncSetAttribute(simSimul_cuda, cudaFuncAttributePreferredSharedMemoryCarveout, 100));
         simSimul_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Cfg, g_cuLUTs_Addrs, g_cuLUTs_Outputs, step_starts[depth], n);
     }
 

@@ -3,6 +3,8 @@
 #include <map>
 #include <unordered_map>
 #include <algorithm>
+#include <fstream>
+#include <cstdlib>
 
 #include "optimize.h"
 
@@ -177,7 +179,7 @@ void optimizeCache(
         }
     }
 
-    for(size_type i=0; i != outbits.size(); ++i){
+    for(size_t i=0; i != outbits.size(); ++i){
         bool is_ff = outbits[i].second & 1;
         int  node  =  outbits[i].second >> 1;
 
@@ -185,7 +187,7 @@ void optimizeCache(
         perm_outbits[i].second = (perm[node] << 1) | is_ff;
     }
 
-    for(size_type i=0; i != ones.size(); ++i){
+    for(size_t i=0; i != ones.size(); ++i){
         bool is_ff = ones[i] & 1;
         int  node  =  ones[i] >> 1;
 
@@ -193,15 +195,15 @@ void optimizeCache(
     }
 
     //  Copy everything back to the original vectors.
-    for(size_type i=0; i != luts.size(); ++i){
+    for(size_t i=0; i != luts.size(); ++i){
         luts[i] = perm_luts[i];
     }
 
-    for(size_type i=0; i != outbits.size(); ++i){
+    for(size_t i=0; i != outbits.size(); ++i){
         outbits[i] = perm_outbits[i];
     }
 
-    for(size_type i=0; i != ones.size(); ++i){
+    for(size_t i=0; i != ones.size(); ++i){
         ones[i] = perm_ones[i];
     }
 
@@ -213,6 +215,232 @@ void optimizeCache(
         }
         printf("\n");
     }
+
+}
+
+int optimizeReadGroupFile(const char *filename, unordered_map<int,int>& id2group)
+{
+    fprintf(stderr, "Reading LUT id to group mapping file '%s'\n", filename);
+    ifstream finput;
+    finput.open(filename, fstream::in);
+    if (finput.is_open() != true){
+        fprintf(stderr, "Can't open group file '%s'. Aborting...\n", filename);
+        exit(-1);
+    }
+
+    int max_group_nr = -1;
+    id2group.clear();
+
+    while(!finput.eof()){
+        int lut_id, group_nr;
+
+        finput >> lut_id >> group_nr;
+
+        if (id2group.find(lut_id) == id2group.end()){
+            id2group[lut_id] = group_nr;
+            max_group_nr = max(max_group_nr, group_nr);
+        }
+        else{
+            fprintf(stderr, "LUT ID %d (group %d) has duplicate entries?! Ignoring...\n", lut_id, group_nr);
+        }
+    }
+    finput.close();
+
+    fprintf(stderr, "%zu LUTs remapped to %d groups.\n", id2group.size(), max_group_nr);
+
+    return max_group_nr+1;
+}
+
+void optimizeSortByGroup(
+        vector<t_lut>&                          luts,
+        vector<pair<std::string, int> >&        outbits,
+        vector<int>&                            ones,
+        const unordered_map<int, int>           id2group
+        )
+{
+    // Find the number of groups
+    int max_group_nr = -1;
+    for(auto it=id2group.begin(); it!=id2group.end(); ++it){
+        max_group_nr = max(max_group_nr, it->second);
+    }
+
+    fprintf(stderr, "%d groups...\n", max_group_nr+1);
+
+    // Now create a list with all the LUTs for each group.
+    vector<vector<int>>     groups_with_luts(max_group_nr+1);
+    for(auto it=id2group.begin(); it!=id2group.end(); ++it){
+        groups_with_luts[it->second].push_back(it->first);
+    }
+
+    fprintf(stderr, "1\n");
+
+    // Create permutation table from new position to old position...
+    vector<int> inv_perm;
+    inv_perm.reserve(luts.size());
+
+    for(auto g_it=groups_with_luts.begin(); g_it!=groups_with_luts.end();++g_it){
+        // Sort to maintain order the same order in the group as the one before grouping.
+//        sort(g_it->begin(), g_it->end());
+
+        for(auto lut_id_it=g_it->begin(); lut_id_it!=g_it->end(); ++lut_id_it){
+            inv_perm.push_back(*lut_id_it);
+        }
+    }
+
+    // Create permutation table from old position to new position
+    vector<int> perm;
+    perm.resize(luts.size());
+
+    for(size_t i=0; i<inv_perm.size(); ++i){
+        perm[inv_perm[i]] = i;
+        //perm[i] = i;
+    }
+
+    fprintf(stderr, "2, hello\n");
+
+    vector<t_lut>                           perm_luts(luts.size());
+    std::vector<pair<std::string, int> >    perm_outbits(outbits.size());
+    vector<int>                             perm_ones(ones.size());
+
+    for(size_t i=0; i != perm.size(); ++i){
+        perm_luts[perm[i]].cfg    = luts[i].cfg;
+        for(int in=0; in<4; ++in){
+            if (luts[i].inputs[in] != -1){
+                bool is_ff = luts[i].inputs[in] & 1;
+                int  node  = luts[i].inputs[in] >> 1;
+                perm_luts[perm[i]].inputs[in]    = (perm[node] << 1) | is_ff;
+            }
+            else
+                perm_luts[perm[i]].inputs[in]    = -1;
+        }
+    }
+    
+    fprintf(stderr, "3\n");
+
+    for(size_t i=0; i<outbits.size(); ++i){
+        bool is_ff = outbits[i].second & 1;
+        int  node  =  outbits[i].second >> 1;
+
+        perm_outbits[i].first  = outbits[i].first;
+        perm_outbits[i].second = (perm[node] << 1) | is_ff;
+    }
+
+    for(size_t i=0; i<ones.size(); ++i){
+        bool is_ff = ones[i] & 1;
+        int  node  =  ones[i] >> 1;
+
+        perm_ones[i] = perm[node] << 1 | is_ff;
+    }
+
+    //  Copy everything back to the original vectors.
+    for(size_t i=0; i<luts.size(); ++i){
+        luts[i] = perm_luts[i];
+    }
+
+    for(size_t i=0; i<outbits.size(); ++i){
+        outbits[i] = perm_outbits[i];
+    }
+
+    for(size_t i=0; i<ones.size(); ++i){
+        ones[i] = perm_ones[i];
+    }
+}
+
+
+void optimizeRandomOrder(
+        vector<t_lut>&                          luts,
+        vector<pair<std::string, int> >&        outbits,
+        vector<int>&                            ones
+        )
+{
+    // Create permutation table from old position to new position
+    vector<int> perm;
+    perm.resize(luts.size());
+
+    for(size_t i=0; i<perm.size(); ++i){
+        perm[i] = i;
+    }
+
+    srand(0);
+    int rand_max = -1;
+    for(int j=0; j<10;++j){
+        for(int i=0; i<luts.size(); ++i){
+            int random = rand() % luts.size();
+            rand_max = max(rand_max, random);
+            int old = perm[i];
+            perm[i] = perm[random];
+            perm[random] = old;
+        }
+    }
+
+
+    vector<t_lut>                           perm_luts(luts.size());
+    std::vector<pair<std::string, int> >    perm_outbits(outbits.size());
+    vector<int>                             perm_ones(ones.size());
+
+    for(size_t i=0; i != perm.size(); ++i){
+        perm_luts[perm[i]].cfg    = luts[i].cfg;
+        for(int in=0; in<4; ++in){
+            if (luts[i].inputs[in] != -1){
+                bool is_ff = luts[i].inputs[in] & 1;
+                int  node  = luts[i].inputs[in] >> 1;
+                perm_luts[perm[i]].inputs[in]    = (perm[node] << 1) | is_ff;
+            }
+            else
+                perm_luts[perm[i]].inputs[in]    = -1;
+        }
+    }
+    
+    fprintf(stderr, "3\n");
+
+    for(size_t i=0; i<outbits.size(); ++i){
+        bool is_ff = outbits[i].second & 1;
+        int  node  =  outbits[i].second >> 1;
+
+        perm_outbits[i].first  = outbits[i].first;
+        perm_outbits[i].second = (perm[node] << 1) | is_ff;
+    }
+
+    for(size_t i=0; i<ones.size(); ++i){
+        bool is_ff = ones[i] & 1;
+        int  node  =  ones[i] >> 1;
+
+        perm_ones[i] = perm[node] << 1 | is_ff;
+    }
+
+    //  Copy everything back to the original vectors.
+    for(size_t i=0; i<luts.size(); ++i){
+        luts[i] = perm_luts[i];
+    }
+
+    for(size_t i=0; i<outbits.size(); ++i){
+        outbits[i] = perm_outbits[i];
+    }
+
+    for(size_t i=0; i<ones.size(); ++i){
+        ones[i] = perm_ones[i];
+    }
+
+    int idem_cnt = 0;
+    int no_conn_cnt = 0;
+    fprintf(stderr, "Max random: %d, RAND_MAX: %d\n", rand_max, RAND_MAX);
+    for(int i=0; i<luts.size(); ++i){
+        for(int j=0;j<4;++j){
+            if (luts[i].inputs[j]==-1){
+                ++no_conn_cnt;
+                continue;
+            }
+#if 0
+            printf("%d: %d\n", i, luts[i].inputs[j]>>1);
+#endif
+
+            if (i==(luts[i].inputs[j]>>1)){
+                ++idem_cnt;
+            }
+        }
+    }
+    fprintf(stderr, "idem_cnt: %d\n", idem_cnt);
+    fprintf(stderr, "no_conn_cnt: %d\n", no_conn_cnt);
 
 }
 
