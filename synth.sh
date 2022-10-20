@@ -8,5 +8,5 @@ mkdir build
 cp designs/$1.v build/synth.v
 
 cd synth
-yosys -s synth.yosys
+/usr/bin/time -v yosys -s synth.yosys -l $1.yosys.log -t
 cd ..

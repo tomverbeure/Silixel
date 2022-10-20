@@ -444,10 +444,11 @@ int main(int argc, char **argv)
     optimizeRandomOrder(g_luts, outbits, g_ones);
 #endif
 
-#if 1
+#if 0
     unordered_map<int,int> id2group;
     //int num_groups = optimizeReadGroupFile("louvain.blaze_255.l3.group", id2group);
-    int num_groups = optimizeReadGroupFile("louvain.blaze_2x_255.l3.group", id2group);
+    //int num_groups = optimizeReadGroupFile("louvain.blaze_2x_255.l3.group", id2group);
+    int num_groups = optimizeReadGroupFile("louvain.blaze_4x_255.l5.group", id2group);
     //int num_groups = optimizeReadGroupFile("louvain.vga_demo.l2.group", id2group);
     optimizeSortByGroup(g_luts, outbits, g_ones, id2group);
 #endif
