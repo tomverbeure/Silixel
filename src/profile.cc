@@ -311,15 +311,17 @@ void profileInputDifferences(
 
 void profileDumpLouvainGraph(
     const vector<t_lut>&    luts,
-    string &                egdesFile,
+    string &                edgesFilename,
     int                     max_fanout 
     )
 {
+    FILE *fp = fopen(edgesFilename.c_str(), "wt+");
+    assert(fp);
+
     unordered_map<int, int> high_fanout_luts;
     if (max_fanout != -1){
         getHighFanoutLuts(luts, high_fanout_luts, max_fanout+1);
     }
-
 
     for(int lid=0; lid<luts.size(); ++lid){
         if (high_fanout_luts.find(lid) != high_fanout_luts.end()){
@@ -337,10 +339,11 @@ void profileDumpLouvainGraph(
                 continue;
             }
 
-            printf("%d %d\n", input_id, lid);
+            fprintf(fp, "%d %d\n", input_id, lid);
         }
     }
 
+    fclose(fp);
 }
 
 void profileDumpLeidenGraph(

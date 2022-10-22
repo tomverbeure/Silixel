@@ -400,7 +400,7 @@ void printHelp()
 
 void processArgs(int argc, char** argv)
 {
-    const char* const short_opts = "rc::df";
+    const char* const short_opts = "rc::d:f:";
     const option long_opts[] = {
             {"random",  no_argument,       nullptr, 'r'},
             {"cuthill", optional_argument, nullptr, 'c'},
