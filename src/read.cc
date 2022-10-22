@@ -199,13 +199,14 @@ void buildSimulData(
   Reads the design from a BLIF file
 */
 void readDesign(
-  vector<t_lut>& _luts,
-  vector<pair<string, int> >& _outbits,
-  vector<int>& _ones)
+    const string&               filename, 
+    vector<t_lut>&              _luts,
+    vector<pair<string, int> >& _outbits,
+    vector<int>&                _ones)
 {
   t_blif blif;
   // parse the blif file
-  parse(SRC_PATH "/build/synth.blif", blif);
+  parse(filename.c_str(), blif);
   // build the design datastructure
   buildSimulData(blif, _luts, _outbits, _ones);
 }

@@ -6,6 +6,8 @@
 #include <fstream>
 #include <cstdlib>
 
+#include "utility.h"
+
 #include "optimize.h"
 
 #include <boost/graph/adjacency_list.hpp>
@@ -19,17 +21,28 @@
 // 3. Remove high fanout nets from graph after step 2, RMC again, bandwidth
 // 4. Remove high fanout nets from original graph, RMC, bandwidth
 // 5. Check if BW after step 3 and 4 is similar
-void optimizeCache(
+void optimizeCuthillMckee(
         vector<t_lut>&                          luts,
         std::vector<pair<std::string, int> >&   outbits,
-        vector<int>&                            ones)
+        vector<int>&                            ones, 
+        int                                     maxFanout)
 {
     using namespace boost;
     using namespace std;
 
-   cout << "===========================================================" << endl;
-   cout << "Optimizing graph..." << endl;
-   cout << "===========================================================" << endl;
+    std::unordered_map<int, int> fanout_luts;
+
+    if (maxFanout != -1){
+        cout << "===========================================================" << endl;
+        cout << "Finding high fanout nets..." << endl;
+        cout << "===========================================================" << endl;
+
+        getHighFanoutLuts(luts, fanout_luts, maxFanout);
+    }
+
+    cout << "===========================================================" << endl;
+    cout << "Optimizing graph..." << endl;
+    cout << "===========================================================" << endl;
 
     typedef adjacency_list< 
             listS,                      // how to store edge list
@@ -51,18 +64,24 @@ void optimizeCache(
     for(int lut_idx=0; lut_idx<luts.size(); ++lut_idx){
         const t_lut& cur_lut = luts[lut_idx];
 
-        for(int input_idx=0; input_idx<4; ++input_idx){
-            if (cur_lut.inputs[input_idx] == -1)
+        for(int f=0; f<4; ++f){
+            int input_idx = cur_lut.inputs[f];
+            if (input_idx == -1)
                 continue;
+            input_idx >>= 1;
 
-            add_edge(lut_idx, cur_lut.inputs[input_idx] >> 1, netlist_graph);
+            if (fanout_luts[input_idx]){
+                continue;
+            }
+
+            add_edge(lut_idx, input_idx, netlist_graph);
         }
     }
 
     printf("Num vertices: %zu\n", num_vertices(netlist_graph));
     printf("Graph bandwidth: %zu\n", bandwidth(netlist_graph));
 
-#if 1
+#if 0
     //============================================================
     // Create a graph degree histogram
     //============================================================

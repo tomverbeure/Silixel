@@ -2,6 +2,8 @@
 #define PROFILE_H
 
 #include <vector>
+#include <string>
+
 using namespace std;
 
 #include "read.h"
@@ -15,10 +17,13 @@ void profileInputDifferences(
     const vector<int>&      step_ends,
     int level
     );
+
 void profileDumpLouvainGraph(
     const vector<t_lut>&    luts,
+    string &                egdesFile,
     int                     max_fanout 
     );
+
 void profileDumpLeidenGraph(
     const vector<t_lut>&    luts
     );

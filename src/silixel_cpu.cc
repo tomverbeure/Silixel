@@ -83,7 +83,7 @@ int main(int argc,char **argv)
   vector<t_lut> luts;
   vector<pair<string,int> > outbits;
   vector<int>   ones;
-  readDesign(luts, outbits, ones);
+  readDesign(std::string("synth.blif"), luts, outbits, ones);
 
   vector<int>   step_starts;
   vector<int>   step_ends;

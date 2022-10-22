@@ -55,6 +55,7 @@ typedef struct s_lut {
 #pragma pack(pop)
 
 void readDesign(
+  const std::string&                        filename,
   std::vector<t_lut>&                       _luts,
   std::vector<std::pair<std::string,int> >& _outbits,
   std::vector<int>&                         _ones);

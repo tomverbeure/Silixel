@@ -311,6 +311,7 @@ void profileInputDifferences(
 
 void profileDumpLouvainGraph(
     const vector<t_lut>&    luts,
+    string &                egdesFile,
     int                     max_fanout 
     )
 {

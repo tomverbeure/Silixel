@@ -317,7 +317,7 @@ void mainRender()
   ImGui::Checkbox("Simulate on GPU", &g_Use_GPU);
   ImGui::Text("%5.1f KHz %5.1f usec / cycle", g_Hz/1000.0, g_UsecPerCycle);
   ImGui::Text("simulated cycle: %6d", g_Cycle);
-  ImGui::Text("simulated LUT4+FF %7d", g_luts.size());
+  ImGui::Text("simulated LUT4+FF %7zu", g_luts.size());
   ImGui::Text("screen row %3d",g_Y);
   if (!g_OutPortString.empty()) {
     ImGui::Text("outputs: %s", g_OutPortString.c_str());
@@ -372,7 +372,7 @@ int main(int argc, char **argv)
     // g_luts   -> all the LUTs, already with integrated FF
     // outbits  -> signal name and integer index with LUT D and Q values that are considered an output
     // g_ones   -> integer index of the LUTs for which the FF is initial value is set to 1.
-    readDesign(g_luts, outbits, g_ones);
+    readDesign(std::string("synth.blif"), g_luts, outbits, g_ones);
 
     // After readDesign, all latches and LUTs are already converted in LUTs with FFs.
     // There hasn't been any sorted yet into logic levels, but that sorting won't do any

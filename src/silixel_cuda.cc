@@ -42,6 +42,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <ctime>
 #include <cmath>
+#include <string>
+#include <getopt.h>
 
 #include <LibSL/LibSL.h>
 #include <LibSL/LibSL_gl4core.h>
@@ -64,11 +66,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "dummy.h"
 
-
 // --------------------------------------------------------------
 
 #include <imgui.h>
 #include <LibSL/UIHelpers/BindImGui.h>
+
+// --------------------------------------------------------------
+// Command line parameters
+
+bool    randomOrder            = false;
+bool    cuthillMckee           = false;
+int     maxFanout              = -1;
+string  dumpEdgesFilename;
+string  netlistFilename;
 
 // --------------------------------------------------------------
 
@@ -373,6 +383,77 @@ void mainRender()
 
 /* -------------------------------------------------------- */
 
+void printHelp()
+{
+    fprintf(stderr, 
+        "silixel_cuda [options] <netlist> \n"
+        "   netlist                     a file in .blif format\n"
+        "   -r, --random                randomize node IDs after loading\n"
+        "   -c, --cuthill               perform Cuthill-McKee optimization on graph\n"
+        "   -d, --dump <filename>       dump graph connections to the specified file as input for Louvain algorithm\n"
+        "                               Program will exit after dumping.\n"
+        "   -f, --fanout <max fanout>   specify the maximum node fanout for the Louvain or Cuthill-McKee option.\n"
+        "                               Default is -1, in which case no high fanout nodes are ignored.\n"
+        "   -h, --help                  This help message.\n"
+        "\n");
+}
+
+void processArgs(int argc, char** argv)
+{
+    const char* const short_opts = "rc::df";
+    const option long_opts[] = {
+            {"random",  no_argument,       nullptr, 'r'},
+            {"cuthill", optional_argument, nullptr, 'c'},
+            {"dump",    required_argument, nullptr, 'd'},
+            {"fanout",  required_argument, nullptr, 'f'},
+            {"help",    no_argument,       nullptr, 'h'},
+            {nullptr,   no_argument,       nullptr,  0 }
+    };
+
+    while (true) {
+        const auto opt = getopt_long(argc, argv, short_opts, long_opts, nullptr);
+
+        if (-1 == opt)
+            break;
+
+        switch(opt){
+            case 'r':
+                fprintf(stderr, "random ordering enabled.\n");
+                randomOrder = true;
+                break;
+            case 'c':
+                cuthillMckee = true;
+                fprintf(stderr, "Cuthill-McKee enabled.\n");
+                break;
+            case 'f':
+                maxFanout = atoi(optarg);
+                fprintf(stderr, "max fanout = %d\n", maxFanout);
+                break;
+            case 'd':
+                dumpEdgesFilename = optarg;
+                fprintf(stderr, "Dumping edges to '%s'\n", dumpEdgesFilename.c_str());
+                break;
+            case 'h':
+                printHelp();
+                exit(0);
+            default:
+                printHelp();
+                exit(-1);
+        }
+    }
+
+    if ((optind+1) == argc){
+        netlistFilename = argv[optind];
+        fprintf(stderr, "Use netlist file '%s'.\n", netlistFilename.c_str());
+    }
+    else{
+        fprintf(stderr, "No netlist file specified.\n");
+        exit(-1);
+    }
+
+}
+
+
 CUdevice g_cuDevice;
 
 void initCuda(int argc, char **argv)
@@ -386,9 +467,8 @@ void initCuda(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+  processArgs(argc, argv);
   initCuda(argc,argv);
-//  CudaDummy();
-//  CudaBWTest();
 
   try {
 
@@ -427,7 +507,7 @@ int main(int argc, char **argv)
 
     /// load up design
     vector<pair<string,int> > outbits;
-    readDesign(g_luts, outbits, g_ones);
+    readDesign(netlistFilename, g_luts, outbits, g_ones);
 
 #if 0
     analyze(g_luts, outbits, g_ones, g_step_starts, g_step_ends, g_cpu_depths);
@@ -435,14 +515,14 @@ int main(int argc, char **argv)
     profileInputDifferences(g_luts, g_step_starts, g_step_ends, 9);
 #endif
 
-#if 0
-    profileDumpLouvainGraph(g_luts, 255);
-    exit(0);
-#endif
+    if (randomOrder){
+        optimizeRandomOrder(g_luts, outbits, g_ones);
+    }
 
-#if 0
-    optimizeRandomOrder(g_luts, outbits, g_ones);
-#endif
+    if (!dumpEdgesFilename.empty()){
+        profileDumpLouvainGraph(g_luts, dumpEdgesFilename, maxFanout);
+        exit(0);
+    }
 
 #if 0
     unordered_map<int,int> id2group;
@@ -453,9 +533,9 @@ int main(int argc, char **argv)
     optimizeSortByGroup(g_luts, outbits, g_ones, id2group);
 #endif
 
-#if 0
-    optimizeCache(g_luts, outbits, g_ones);
-#endif
+    if (cuthillMckee){
+        optimizeCuthillMckee(g_luts, outbits, g_ones, maxFanout);
+    }
 
     analyze(g_luts, outbits, g_ones, g_step_starts, g_step_ends, g_cpu_depths);
 

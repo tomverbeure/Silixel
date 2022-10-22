@@ -9,10 +9,12 @@ using namespace std;
 #include "read.h"
 #include "analyze.h"
 
-void optimizeCache(
+void optimizeCuthillMckee(
         vector<t_lut>&                          luts,
         std::vector<pair<std::string, int> >&   outbits,
-        vector<int>&                            ones);
+        vector<int>&                            ones,
+        int                                     maxFanout
+        );
 
 int optimizeReadGroupFile(const char *filename, unordered_map<int,int>& id2group);
 void optimizeSortByGroup(
