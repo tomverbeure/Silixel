@@ -371,6 +371,65 @@ __global__ void simSimul_cuda(
     }
 }
 
+__global__ void simSimulStaged_cuda(
+    const t_lut_cfg     * cfg,
+    const t_lut_addr    * addrs,
+    t_lut_val           * outputs, 
+    const int           start_lut,
+    const int           N
+)
+{
+#if 0
+    printf("blockIdx.x: %d, threadIdx.x: %d\n", blockIdx.x, threadIdx.x);
+#endif
+
+    const int sharedMemItems = 512;
+
+    __shared__ t_lut_addr   sharedAddrs[sharedMemItems*4];
+    __shared__ t_lut_cfg    sharedCfgs[sharedMemItems];
+    __shared__ t_lut_val    sharedOutputs[sharedMemItems];
+
+    for(int i=blockIdx.x * blockDim.x + threadIdx.x; i < N; i += blockDim.x * gridDim.x){
+        int lut_id = start_lut + i;
+
+        for(int f=0; f<4; ++f){
+            sharedAddrs[((i*4)+f) % (4 * sharedMemItems)]     = addrs[lut_id * 4 + f];
+        }
+        sharedCfgs[i % sharedMemItems]      = cfg[lut_id];
+        sharedOutputs[i % sharedMemItems]   = outputs[lut_id];
+
+        __syncthreads();
+
+        t_lut_cfg C     = sharedCfgs[i % sharedMemItems];
+        t_lut_val i0    = get_output(outputs, sharedAddrs[(i*4    ) % (4 *sharedMemItems) ]);
+        t_lut_val i1    = get_output(outputs, sharedAddrs[(i*4 + 1) % (4 *sharedMemItems) ]);
+        t_lut_val i2    = get_output(outputs, sharedAddrs[(i*4 + 2) % (4 *sharedMemItems) ]);
+        t_lut_val i3    = get_output(outputs, sharedAddrs[(i*4 + 3) % (4 *sharedMemItems) ]);
+        int sh = i3 | (i2 << 1) | (i1 << 2) | (i0 << 3);
+
+        t_lut_val outv = sharedOutputs[i % sharedMemItems];
+        t_lut_val old_d = outv & 1u;
+        t_lut_val new_d = (C >> sh) & 1u;
+
+#if DEBUG==1
+        printf("start_lut: %d, i: %d, id: %d, N: %d, new_d: %d <- i0(%d), i1(%d), i2(%d), i3(%d), a0(%d), a1(%d), a2(%d), a3(%d)\n", 
+                start_lut, i, lut_id, N, new_d, i0, i1, i2, i3, addrs[lut_id*4], addrs[lut_id*4+1], addrs[lut_id*4+2], addrs[lut_id*4+3]);
+#endif
+
+        if (old_d != new_d) {
+            if (new_d == 1){
+                outputs[lut_id] = outv | 1;
+            }
+            else{
+                outputs[lut_id] = outv & 0xfffffffe;
+            }
+        }
+    }
+}
+
+
+
+
 #if 0
 __global__ void simSimulShared_cuda(
     const t_block_info  * block_info,
@@ -497,7 +556,12 @@ void simulBegin_cuda(
         blockSize = g_blockSize;
         numBlocks = min(g_numBlocks, (n+blockSize-1)/blockSize);
 
-        simSimul_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Cfg, g_cuLUTs_Addrs, g_cuLUTs_Outputs, 0, n);
+        if (1){
+            simSimul_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Cfg, g_cuLUTs_Addrs, g_cuLUTs_Outputs, 0, n);
+        }
+        else{
+            simSimulStaged_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Cfg, g_cuLUTs_Addrs, g_cuLUTs_Outputs, 0, n); 
+        }
 
         n = luts.size();
         blockSize = g_blockSize;
@@ -532,14 +596,16 @@ void simulCycle_cuda(
     for(int depth=1; depth < step_starts.size(); ++depth){
         n = step_ends[depth]-step_starts[depth]+1;
 
-        //blockSize = g_blockSize;
-        //numBlocks = (n+blockSize-1)/blockSize;
-
         blockSize = g_blockSize;
         numBlocks = min(g_numBlocks, (n+blockSize-1)/blockSize);
 
-        checkCudaErrors(cudaFuncSetAttribute(simSimul_cuda, cudaFuncAttributePreferredSharedMemoryCarveout, 100));
-        simSimul_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Cfg, g_cuLUTs_Addrs, g_cuLUTs_Outputs, step_starts[depth], n);
+        //checkCudaErrors(cudaFuncSetAttribute(simSimul_cuda, cudaFuncAttributePreferredSharedMemoryCarveout, 100));
+        if (1){
+            simSimul_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Cfg, g_cuLUTs_Addrs, g_cuLUTs_Outputs, step_starts[depth], n);
+        }
+        else{
+            simSimulStaged_cuda<<<numBlocks,blockSize>>>(g_cuLUTs_Cfg, g_cuLUTs_Addrs, g_cuLUTs_Outputs, step_starts[depth], n);
+        }
     }
 
     n = luts.size();
