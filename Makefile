@@ -3,8 +3,8 @@ DESIGN                  ?= silice_vga_demo
 LOUVAIN_MAX_FANOUT      ?= 256
 LOUVAIN_LEVEL           ?= 3
 
-#SIM_EXE         = ./build/src/silixel_cuda
-SIM_EXE         = ./build_debug/src/silixel_cuda
+SIM_EXE         = ./build/src/silixel_cuda
+#SIM_EXE         = ./build_debug/src/silixel_cuda
 LOUVAIN_DIR     = ./louvain-generic/
 
 DESIGN_DIR      = $(DESIGN).design
