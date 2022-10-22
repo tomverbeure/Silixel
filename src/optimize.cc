@@ -237,7 +237,7 @@ void optimizeCuthillMckee(
 
 }
 
-int optimizeReadGroupFile(const char *filename, unordered_map<int,int>& id2group)
+int optimizeReadReorderFile(const char *filename, unordered_map<int,int>& id2group)
 {
     fprintf(stderr, "Reading LUT id to group mapping file '%s'\n", filename);
     ifstream finput;
@@ -265,7 +265,7 @@ int optimizeReadGroupFile(const char *filename, unordered_map<int,int>& id2group
     }
     finput.close();
 
-    fprintf(stderr, "%zu LUTs remapped to %d groups.\n", id2group.size(), max_group_nr);
+    fprintf(stderr, "%zu LUTs remapped to %d groups.\n", id2group.size(), max_group_nr+1);
 
     return max_group_nr+1;
 }
@@ -299,7 +299,7 @@ void optimizeSortByGroup(
 
     for(auto g_it=groups_with_luts.begin(); g_it!=groups_with_luts.end();++g_it){
         // Sort to maintain order the same order in the group as the one before grouping.
-//        sort(g_it->begin(), g_it->end());
+        sort(g_it->begin(), g_it->end());
 
         for(auto lut_id_it=g_it->begin(); lut_id_it!=g_it->end(); ++lut_id_it){
             inv_perm.push_back(*lut_id_it);

@@ -16,7 +16,7 @@ void optimizeCuthillMckee(
         int                                     maxFanout
         );
 
-int optimizeReadGroupFile(const char *filename, unordered_map<int,int>& id2group);
+int optimizeReadReorderFile(const char *filename, unordered_map<int,int>& id2group);
 void optimizeSortByGroup(
         vector<t_lut>&                          luts,
         vector<pair<std::string, int> >&        outbits,

@@ -78,6 +78,7 @@ bool    randomOrder            = false;
 bool    cuthillMckee           = false;
 int     maxFanout              = -1;
 string  dumpEdgesFilename;
+string  reorderFilename;
 string  netlistFilename;
 
 // --------------------------------------------------------------
@@ -394,18 +395,20 @@ void printHelp()
         "                               Program will exit after dumping.\n"
         "   -f, --fanout <max fanout>   specify the maximum node fanout for the Louvain or Cuthill-McKee option.\n"
         "                               Default is -1, in which case no high fanout nodes are ignored.\n"
+        "   -o, --order <filename>      Apply file with vertex reordering information.\n"
         "   -h, --help                  This help message.\n"
         "\n");
 }
 
 void processArgs(int argc, char** argv)
 {
-    const char* const short_opts = "rc::d:f:";
+    const char* const short_opts = "rc::d:f:o:";
     const option long_opts[] = {
             {"random",  no_argument,       nullptr, 'r'},
             {"cuthill", optional_argument, nullptr, 'c'},
             {"dump",    required_argument, nullptr, 'd'},
             {"fanout",  required_argument, nullptr, 'f'},
+            {"order",   required_argument, nullptr, 'o'},
             {"help",    no_argument,       nullptr, 'h'},
             {nullptr,   no_argument,       nullptr,  0 }
     };
@@ -432,6 +435,10 @@ void processArgs(int argc, char** argv)
             case 'd':
                 dumpEdgesFilename = optarg;
                 fprintf(stderr, "Dumping edges to '%s'\n", dumpEdgesFilename.c_str());
+                break;
+            case 'o':
+                reorderFilename = optarg;
+                fprintf(stderr, "Reorder file: '%s'\n", reorderFilename.c_str());
                 break;
             case 'h':
                 printHelp();
@@ -524,14 +531,11 @@ int main(int argc, char **argv)
         exit(0);
     }
 
-#if 0
-    unordered_map<int,int> id2group;
-    //int num_groups = optimizeReadGroupFile("louvain.blaze_255.l3.group", id2group);
-    //int num_groups = optimizeReadGroupFile("louvain.blaze_2x_255.l3.group", id2group);
-    int num_groups = optimizeReadGroupFile("louvain.blaze_4x_255.l5.group", id2group);
-    //int num_groups = optimizeReadGroupFile("louvain.vga_demo.l2.group", id2group);
-    optimizeSortByGroup(g_luts, outbits, g_ones, id2group);
-#endif
+    if (!reorderFilename.empty()){
+        unordered_map<int,int> id2group;
+        int num_groups = optimizeReadReorderFile(reorderFilename.c_str(), id2group);
+        optimizeSortByGroup(g_luts, outbits, g_ones, id2group);
+    }
 
     if (cuthillMckee){
         optimizeCuthillMckee(g_luts, outbits, g_ones, maxFanout);
